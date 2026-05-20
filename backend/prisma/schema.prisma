@@ -70,16 +70,46 @@ model Emergency {
   type            String           // 'Shooting' | 'Medical' | 'Assault' | 'Fire' | 'Flooding'
   victimLat       Float
   victimLng       Float
-  status          String           @default("active") // 'active' | 'dispatched' | 'resolved' | 'cancelled'
+  // Reverse-geocoded street address, populated best-effort on create. Read-only
+  // for display in incident lists.
+  address         String?
+  status          String           @default("active") // 'active' | 'dispatched' | 'resolved' | 'cancelled' | 'expired'
+  // 'sos_panic'  — fast-path panic button press (auth or anonymous)
+  // 'report'     — slow-path detailed incident report (description + media)
+  source          String           @default("sos_panic")
+  // Citizen-chosen priority for `source='report'` rows; auto-set to 'critical'
+  // for panic SOS. UI tiers: 'critical' | 'high' | 'medium' | 'low'.
+  priority        String?
+  // If true, the reporter's identity is hidden from cross-org institution
+  // views. The owning citizen still sees the row in My Reports.
+  anonymous       Boolean          @default(false)
   notes           String?
   createdAt       DateTime         @default(now())
   resolvedAt      DateTime?
   notifications   EmergencyNotification[]
   tokens          EmergencyToken[]
   dispatches      EmergencyDispatch[]
+  attachments     EmergencyAttachment[]
 
   @@index([status])
   @@index([createdAt])
+  @@index([citizenId, createdAt])
+}
+
+// Media evidence attached to an emergency report (typically a photo for the
+// slow-path `source='report'` flow). One row per S3 object; references are
+// best-effort cleaned up when the parent emergency is cancelled or deleted.
+model EmergencyAttachment {
+  id              String     @id @default(uuid())
+  emergencyId     String
+  emergency       Emergency  @relation(fields: [emergencyId], references: [id], onDelete: Cascade)
+  mediaKey        String     // S3 object key
+  mediaType       String     // 'image' | 'video' | 'audio'
+  sizeBytes       Int?
+  originalName    String?
+  createdAt       DateTime   @default(now())
+
+  @@index([emergencyId])
 }
 
 // Hashed single-use tokens that grant access to the public /e and /d pages

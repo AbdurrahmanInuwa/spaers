@@ -23,6 +23,22 @@ const CATEGORIES = {
     ]),
     maxBytes: 5 * 1024 * 1024, // 5 MB
   },
+  'report-media': {
+    folder: 'report-media',
+    allowed: new Set([
+      // Photos
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/heic',
+      'image/heif',
+      // Videos
+      'video/mp4',
+      'video/quicktime',
+      'video/webm',
+    ]),
+    maxBytes: 30 * 1024 * 1024, // 30 MB — covers a short clip or a hi-res photo
+  },
 };
 
 // POST /api/uploads/sign

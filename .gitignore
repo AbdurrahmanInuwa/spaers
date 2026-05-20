@@ -1,4 +1,60 @@
+# ─── Secrets ─────────────────────────────────────────────────
 .env
+.env.local
+.env.*.local
 backend/.env
 frontend/.env.local
+
+# ─── Dependencies ────────────────────────────────────────────
 node_modules
+
+# ─── macOS / editors ─────────────────────────────────────────
+.DS_Store
+*.swp
+.idea/
+*.iml
+
+# ─── Claude Code scratch / worktrees ─────────────────────────
+.claude/
+
+# ─── Next.js / frontend build output ─────────────────────────
+frontend/.next/
+frontend/out/
+frontend/dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# ─── Flutter / mobile build output ───────────────────────────
+mobile/build/
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/pubspec.lock.bak
+# Android build artefacts
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/.idea/
+mobile/android/captures/
+mobile/android/key.properties
+mobile/android/app/google-services.json
+# iOS build artefacts
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Runner.xcworkspace/xcuserdata/
+mobile/ios/Runner.xcodeproj/xcuserdata/
+mobile/ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+mobile/ios/Runner/GoogleService-Info.plist
+
+# ─── Coverage / logs ─────────────────────────────────────────
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

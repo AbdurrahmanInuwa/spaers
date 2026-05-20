@@ -13,6 +13,29 @@ function normalizeArr(v) {
   return v.map((s) => String(s).trim()).filter(Boolean);
 }
 
+// Same E.164 conversion as lib/sms.js + lib/voice.js — applied at WRITE
+// time so the DB only ever holds fully-qualified numbers. Without this,
+// numbers like "08103701448" reach the carriers without a country code
+// and silently fail.
+function toE164(phone) {
+  if (!phone) return null;
+  let s = String(phone).trim().replace(/[\s()\-.]/g, '');
+  if (!s) return null;
+  if (s.startsWith('+')) return s;
+  if (s.startsWith('00')) return '+' + s.slice(2);
+  const dial = process.env.DEFAULT_DIAL_CODE || '234';
+  if (s.startsWith('0')) return '+' + dial + s.slice(1);
+  if (/^\d+$/.test(s)) return '+' + s;
+  return null;
+}
+
+function normalizePhones(v) {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((s) => toE164(s))
+    .filter(Boolean);
+}
+
 async function getInstitution(req, res) {
   const inst = await prisma.institution.findUnique({
     where: { id: req.session.userId },
@@ -55,7 +78,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Invalid mode' });
     }
     const cleanEmails = normalizeArr(emails);
-    const cleanPhones = normalizeArr(phones);
+    const cleanPhones = normalizePhones(phones);
     if (cleanEmails.length === 0 && cleanPhones.length === 0) {
       return res
         .status(400)
@@ -95,7 +118,7 @@ router.patch('/:id', async (req, res) => {
     const data = {};
     if (typeof name === 'string') data.name = name.trim();
     if (Array.isArray(emails)) data.emails = normalizeArr(emails);
-    if (Array.isArray(phones)) data.phones = normalizeArr(phones);
+    if (Array.isArray(phones)) data.phones = normalizePhones(phones);
     if (typeof mode === 'string') {
       if (!VALID_MODES.has(mode)) {
         return res.status(400).json({ error: 'Invalid mode' });

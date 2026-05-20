@@ -22,11 +22,24 @@ function getClient() {
   return client;
 }
 
+// Convert a possibly-local phone number to E.164 ("+<countryCode><number>").
+// Twilio rejects anything not fully qualified. Rules:
+//   "+2348103701448"   → "+2348103701448" (pass-through)
+//   "2348103701448"    → "+2348103701448"
+//   "08103701448"      → "+2348103701448" (replace leading 0 with +country)
+//   "008103701448"     → "+8103701448"    (00 is the intl prefix → +)
+// DEFAULT_DIAL_CODE env var overrides; falls back to "234" (Nigeria) since
+// that is where the deployed institutions are based today.
 function toE164(phone) {
   if (!phone) return null;
-  const trimmed = String(phone).trim();
-  if (!trimmed.startsWith('+')) return trimmed;
-  return trimmed;
+  let s = String(phone).trim().replace(/[\s()\-.]/g, '');
+  if (!s) return null;
+  if (s.startsWith('+')) return s;
+  if (s.startsWith('00')) return '+' + s.slice(2);
+  const dial = process.env.DEFAULT_DIAL_CODE || '234';
+  if (s.startsWith('0')) return '+' + dial + s.slice(1);
+  if (/^\d+$/.test(s)) return '+' + s;
+  return null;
 }
 
 async function send({ to, message }) {

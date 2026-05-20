@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Replace this placeholder with your actual Google Maps SDK for Android key.
+         Without it, the map view will render as a black/grey square. -->
+    <string name="google_maps_key">YOUR_ANDROID_MAPS_API_KEY</string>
+</resources>

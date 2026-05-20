@@ -1,0 +1,31 @@
+name: spaers_mobile
+description: "SPAERS — Smart Panic Alert & Emergency Response System (citizen mobile app)."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.2.2
+  provider: ^6.1.2
+  shared_preferences: ^2.3.2
+  google_maps_flutter: ^2.7.0
+  geolocator: ^13.0.1
+  image_picker: ^1.1.2
+  video_player: ^2.9.2
+  file_picker: ^8.1.2
+  intl: ^0.19.0
+  url_launcher: ^6.3.0
+  flutter_secure_storage: ^9.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

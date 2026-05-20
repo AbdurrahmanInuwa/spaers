@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth';
 
 const NAV = [
   { label: 'Emergency', href: '/institution/emergency' },
+  { label: 'Incident Command', href: '/institution/incidents' },
   { label: 'Dispatchers', href: '/institution/dispatchers' },
   { label: 'History', href: '/institution/history' },
   { label: 'Settings', href: '/institution/settings' },

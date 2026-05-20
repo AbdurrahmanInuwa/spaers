@@ -194,7 +194,7 @@ export default function EmergencyPage() {
   // fit inside the viewport without overflow.
   const isMobile =
     typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
-  const radius = isMobile ? 150 : 230;
+  const radius = isMobile ? 180 : 270;
   const startAngleDeg = -90;
 
   return (

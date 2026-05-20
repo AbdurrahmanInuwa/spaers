@@ -8,9 +8,9 @@ import { apiFetch } from '../lib/api';
 
 const NAV = [
   { label: 'Emergency', href: '/dashboard/emergency' },
+  { label: 'My Reports', href: '/dashboard/reports' },
   { label: 'Family', href: '/dashboard/family', adultOnly: true },
   { label: 'Volunteer', href: '/dashboard/volunteer', adultOnly: true },
-  { label: 'Hardware', href: '/dashboard/hardware' },
   { label: 'Profile', href: '/dashboard/profile' },
 ];
 

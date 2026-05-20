@@ -23,9 +23,19 @@ function getClient() {
   return client;
 }
 
+// Convert a possibly-local phone number to E.164. Mirrors the helper in
+// lib/sms.js — kept inline here to avoid a circular dependency. See that
+// file for the full rule comment.
 function toE164(phone) {
   if (!phone) return null;
-  return String(phone).trim();
+  let s = String(phone).trim().replace(/[\s()\-.]/g, '');
+  if (!s) return null;
+  if (s.startsWith('+')) return s;
+  if (s.startsWith('00')) return '+' + s.slice(2);
+  const dial = process.env.DEFAULT_DIAL_CODE || '234';
+  if (s.startsWith('0')) return '+' + dial + s.slice(1);
+  if (/^\d+$/.test(s)) return '+' + s;
+  return null;
 }
 
 function escapeXml(s) {
