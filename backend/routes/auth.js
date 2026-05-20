@@ -266,10 +266,33 @@ router.post('/verify-otp', async (req, res) => {
 router.post('/resend-otp', async (req, res) => {
   try {
     const { role, email, purpose = 'signup' } = req.body || {};
-    if (!modelFor(role) || !email) {
+    const M = modelFor(role);
+    if (!M || !email) {
       return res.status(400).json({ error: 'role and email required' });
     }
     const normalizedEmail = normalize(email);
+
+    // Existence gate — never issue an OTP for an address that has no
+    // legitimate flow to verify. Otherwise this endpoint becomes a free
+    // email-bomber AND an account-enumeration oracle.
+    //
+    //   purpose='signup'         → must have a pending-signup in Redis
+    //   purpose=login_2fa /
+    //          change_password /
+    //          reset_password    → must have an account in Postgres
+    //
+    // When the gate fails we still return 200 so callers can't probe
+    // "does this email have a pending signup / account" by status code.
+    let hasSource = false;
+    if (purpose === 'signup') {
+      hasSource = !!(await pendingSignup.get(role, normalizedEmail));
+    } else {
+      hasSource = !!(await M.findUnique({ where: { email: normalizedEmail } }));
+    }
+    if (!hasSource) {
+      return res.json({ ok: true });
+    }
+
     const issued = await otp.issue(purpose, role, normalizedEmail);
     if (issued.error === 'cooldown') {
       return res.status(429).json({
