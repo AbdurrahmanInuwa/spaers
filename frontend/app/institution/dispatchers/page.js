@@ -87,14 +87,14 @@ export default function DispatchersPage() {
     <div className="px-4 py-6 sm:px-6 sm:py-8">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Dispatchers</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {loading
-              ? 'Loading…'
-              : dispatchers.length === 0
-                ? 'No dispatchers yet — add your first.'
-                : `${dispatchers.length} on the team`}
-          </p>
+          <h1 className="text-2xl font-extrabold text-navy">Dispatchers</h1>
+          {loading ? (
+            <p className="mt-1 text-sm text-muted">Loading…</p>
+          ) : dispatchers.length === 0 ? (
+            <p className="mt-1 text-sm text-muted">
+              No dispatchers yet — add your first.
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -147,7 +147,7 @@ function AddCard({ onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="group flex min-h-[180px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white text-slate-400 transition hover:border-brand hover:text-brand"
+      className="group flex min-h-[180px] flex-col items-center justify-center rounded-card border-2 border-dashed border-navy-100 bg-white text-navy-300 transition hover:border-red hover:text-red"
     >
       <span className="text-4xl leading-none">+</span>
       <span className="mt-2 text-xs font-semibold uppercase tracking-wider">
@@ -162,29 +162,29 @@ function DispatcherCard({ dispatcher, onEdit, onDelete }) {
   const initials = (dispatcher.name || '?').slice(0, 2).toUpperCase();
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+    <div className="group relative overflow-hidden rounded-card border border-navy-100 bg-white p-4 shadow-spaers-sm transition hover:shadow-md">
       {/* Top row: avatar + mode chip */}
       <div className="flex items-start justify-between">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand/10 text-sm font-bold text-brand">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red/10 text-sm font-bold text-red">
           {initials}
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+        <span className="inline-flex items-center gap-1 rounded-btn bg-navy px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
           {mode.label}
         </span>
       </div>
 
       {/* Identity */}
       <div className="mt-3">
-        <p className="truncate text-sm font-bold text-slate-900">
+        <p className="truncate text-sm font-bold text-navy">
           {dispatcher.name}
         </p>
-        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-slate-400">
+        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-navy-300">
           {dispatcher.dispatcherId}
         </p>
       </div>
 
       {/* Contact */}
-      <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600">
+      <div className="mt-3 space-y-1.5 border-t border-navy-50 pt-3 text-xs text-navy-600">
         <ContactLine
           icon={
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -213,7 +213,7 @@ function DispatcherCard({ dispatcher, onEdit, onDelete }) {
           onClick={onEdit}
           aria-label="Edit"
           title="Edit"
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-500 shadow ring-1 ring-slate-200 hover:bg-slate-100 hover:text-brand"
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-muted shadow ring-1 ring-slate-200 hover:bg-navy-50 hover:text-red"
         >
           ✎
         </button>
@@ -222,7 +222,7 @@ function DispatcherCard({ dispatcher, onEdit, onDelete }) {
           onClick={onDelete}
           aria-label="Remove"
           title="Remove"
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-500 shadow ring-1 ring-slate-200 hover:bg-red-50 hover:text-brand"
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-muted shadow ring-1 ring-slate-200 hover:bg-red-50 hover:text-red"
         >
           ✕
         </button>
@@ -242,10 +242,10 @@ function ContactLine({ icon, value, extra }) {
   }
   return (
     <div className="flex items-center gap-2">
-      <span className="flex-shrink-0 text-slate-400">{icon}</span>
+      <span className="flex-shrink-0 text-navy-300">{icon}</span>
       <span className="truncate">{value}</span>
       {extra > 0 && (
-        <span className="ml-auto flex-shrink-0 rounded bg-slate-100 px-1.5 text-[10px] font-semibold text-slate-500">
+        <span className="ml-auto flex-shrink-0 rounded bg-navy-50 px-1.5 text-[10px] font-semibold text-muted">
           +{extra}
         </span>
       )}
@@ -265,9 +265,9 @@ function ModalShell({ children, onClose, maxWidth = 'max-w-lg' }) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 p-4">
       <div
-        className={`w-full ${maxWidth} rounded-lg border border-slate-200 bg-white shadow-2xl`}
+        className={`w-full ${maxWidth} rounded-card border border-navy-100 bg-white shadow-2xl`}
       >
         {children}
       </div>
@@ -315,11 +315,11 @@ function DispatcherModal({ title, initial, onClose, onSubmit }) {
   return (
     <ModalShell onClose={onClose}>
       <form onSubmit={submit}>
-        <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+        <div className="flex items-start justify-between border-b border-navy-100 px-5 py-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">{title}</h3>
+            <h3 className="text-base font-bold text-navy">{title}</h3>
             {initial?.dispatcherId && (
-              <p className="mt-0.5 text-[10px] uppercase tracking-[0.15em] text-slate-400">
+              <p className="mt-0.5 text-[10px] uppercase tracking-[0.15em] text-navy-300">
                 {initial.dispatcherId}
               </p>
             )}
@@ -328,7 +328,7 @@ function DispatcherModal({ title, initial, onClose, onSubmit }) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-slate-400 hover:text-slate-700"
+            className="text-navy-300 hover:text-navy-600"
           >
             ✕
           </button>
@@ -336,7 +336,7 @@ function DispatcherModal({ title, initial, onClose, onSubmit }) {
 
         <div className="space-y-4 px-5 py-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">
+            <label className="mb-1 block text-xs font-medium text-navy-600">
               Name
             </label>
             <input
@@ -345,18 +345,12 @@ function DispatcherModal({ title, initial, onClose, onSubmit }) {
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="e.g. Ambulance 1, Officer Mike"
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              className="w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy outline-none focus:border-red"
             />
           </div>
 
-          {!initial && (
-            <p className="rounded-md bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
-              ID will be assigned automatically.
-            </p>
-          )}
-
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">
+            <label className="mb-1 block text-xs font-medium text-navy-600">
               Email(s)
             </label>
             <DynamicList
@@ -370,7 +364,7 @@ function DispatcherModal({ title, initial, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">
+            <label className="mb-1 block text-xs font-medium text-navy-600">
               Phone(s)
             </label>
             <DynamicList
@@ -384,7 +378,7 @@ function DispatcherModal({ title, initial, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">
+            <label className="mb-1 block text-xs font-medium text-navy-600">
               Mode of response
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -397,8 +391,8 @@ function DispatcherModal({ title, initial, onClose, onSubmit }) {
                     onClick={() => setMode(m.value)}
                     className={`rounded-md border px-3 py-2 text-sm font-semibold transition ${
                       isActive
-                        ? 'border-brand bg-brand text-white'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-brand hover:text-brand'
+                        ? 'border-red bg-red text-white'
+                        : 'border-navy-100 bg-white text-navy-600 hover:border-red hover:text-red'
                     }`}
                   >
                     {m.label}
@@ -409,18 +403,18 @@ function DispatcherModal({ title, initial, onClose, onSubmit }) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+        <div className="flex justify-end gap-2 border-t border-navy-100 px-5 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-navy-100 px-4 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-md bg-red px-4 py-2 text-sm font-bold text-white shadow-spaers-sm transition hover:bg-red-dark disabled:cursor-not-allowed disabled:opacity-70"
           >
             {submitting
               ? 'Saving…'
@@ -445,13 +439,13 @@ function DynamicList({ values, onUpdate, onAdd, onRemove, type, placeholder }) {
               value={value}
               onChange={(e) => onUpdate(idx, e.target.value)}
               placeholder={placeholder}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              className="w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy outline-none focus:border-red"
             />
             {values.length > 1 && (
               <button
                 type="button"
                 onClick={() => onRemove(idx)}
-                className="rounded-md border border-slate-300 px-3 text-sm text-slate-500 hover:border-brand hover:text-brand"
+                className="rounded-md border border-navy-100 px-3 text-sm text-muted hover:border-red hover:text-red"
                 aria-label="Remove"
               >
                 −
@@ -463,7 +457,7 @@ function DynamicList({ values, onUpdate, onAdd, onRemove, type, placeholder }) {
       <button
         type="button"
         onClick={onAdd}
-        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-red hover:underline"
       >
         + Add another
       </button>
@@ -478,13 +472,13 @@ function DeleteDispatcherModal({ dispatcher, onClose, onConfirm }) {
 
   return (
     <ModalShell onClose={onClose}>
-      <div className="border-b border-slate-200 px-5 py-4">
-        <h3 className="text-base font-bold text-slate-900">Remove dispatcher</h3>
-        <p className="mt-1 text-xs text-slate-500">
+      <div className="border-b border-navy-100 px-5 py-4">
+        <h3 className="text-base font-bold text-navy">Remove dispatcher</h3>
+        <p className="mt-1 text-xs text-muted">
           To remove{' '}
-          <span className="font-semibold text-slate-700">{dispatcher.name}</span>
+          <span className="font-semibold text-navy-600">{dispatcher.name}</span>
           {' '}({dispatcher.dispatcherId}), type{' '}
-          <code className="rounded bg-slate-100 px-1 py-0.5 text-[11px] font-semibold text-slate-700">
+          <code className="rounded bg-navy-50 px-1 py-0.5 text-[11px] font-semibold text-navy-600">
             delete dispatcher
           </code>{' '}
           below.
@@ -497,14 +491,14 @@ function DeleteDispatcherModal({ dispatcher, onClose, onConfirm }) {
           onChange={(e) => setText(e.target.value)}
           autoFocus
           placeholder="delete dispatcher"
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          className="w-full rounded-md border border-navy-100 bg-white px-3 py-2 text-sm text-navy outline-none focus:border-red"
         />
       </div>
-      <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+      <div className="flex justify-end gap-2 border-t border-navy-100 px-5 py-4">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-md border border-navy-100 px-4 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50"
         >
           Cancel
         </button>
@@ -512,7 +506,7 @@ function DeleteDispatcherModal({ dispatcher, onClose, onConfirm }) {
           type="button"
           onClick={onConfirm}
           disabled={!can}
-          className="rounded-md bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+          className="rounded-md bg-red px-4 py-2 text-sm font-bold text-white shadow-spaers-sm transition hover:bg-red-dark disabled:cursor-not-allowed disabled:bg-navy-100 disabled:text-muted"
         >
           Delete
         </button>

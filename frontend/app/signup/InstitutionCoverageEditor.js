@@ -39,8 +39,6 @@ export default function InstitutionCoverageEditor({
 
   const [center, setCenter] = useState(initialCenter);
   const [polygon, setPolygon] = useState(initialPolygon);
-  const [aiReason, setAiReason] = useState(null);
-  const [aiLoading, setAiLoading] = useState(false);
   const [touched, setTouched] = useState(false);
 
   const polygonRef = useRef(null);
@@ -75,49 +73,6 @@ export default function InstitutionCoverageEditor({
     const newCenter = { lat: e.latLng.lat(), lng: e.latLng.lng() };
     setCenter(newCenter);
     setTouched(true);
-    // If we currently have a circle-shaped polygon (default), recenter it.
-    // Heuristic: only re-center the polygon if AI hasn't been used and the
-    // user hasn't manually edited vertices (cheap version: regenerate from
-    // last known radius).
-    // Conservative: leave the polygon alone — user can re-suggest with AI
-    // or manually drag vertices.
-  }
-
-  async function handleSuggestAI() {
-    if (!institution?.name || !institution?.type || !institution?.address) {
-      toast('Add institution name, type, and address first', { variant: 'error' });
-      return;
-    }
-    setAiLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/ai/suggest-coverage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: institution.name,
-          type: institution.type,
-          country: institution.country,
-          address: institution.address,
-          lat: center.lat,
-          lng: center.lng,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast(data.error || 'AI request failed', { variant: 'error' });
-        return;
-      }
-      const newPath = generateCirclePolygon(center, data.radius_m);
-      setPolygon(newPath);
-      setAiReason(data.reason);
-      setTouched(true);
-      toast(`Suggested ${(data.radius_m / 1000).toFixed(2)} km`);
-    } catch (err) {
-      console.error(err);
-      toast('Network error contacting AI', { variant: 'error' });
-    } finally {
-      setAiLoading(false);
-    }
   }
 
   function handleSave() {
@@ -131,7 +86,7 @@ export default function InstitutionCoverageEditor({
       center,
       polygon: path,
       radius_m: null, // we don't track radius once polygon is freely edited
-      reason: aiReason,
+      reason: null,
     });
   }
 
@@ -152,7 +107,7 @@ export default function InstitutionCoverageEditor({
               mapRef.current = m;
             }}
             options={{
-              mapTypeId: 'satellite',
+              mapTypeId: 'roadmap',
               disableDefaultUI: true,
               zoomControl: true,
               clickableIcons: false,
@@ -171,10 +126,10 @@ export default function InstitutionCoverageEditor({
               onMouseUp={syncPolygonFromRef}
               onDragEnd={syncPolygonFromRef}
               options={{
-                fillColor: '#dc2626',
-                fillOpacity: 0.18,
-                strokeColor: '#dc2626',
-                strokeOpacity: 0.9,
+                fillColor: '#E63946',
+                fillOpacity: 0.16,
+                strokeColor: '#C1121F',
+                strokeOpacity: 0.95,
                 strokeWeight: 2,
                 clickable: false,
               }}
@@ -195,16 +150,6 @@ export default function InstitutionCoverageEditor({
         </div>
 
         <div className="pointer-events-auto flex gap-2">
-          <button
-            type="button"
-            onClick={handleSuggestAI}
-            disabled={aiLoading}
-            className="flex items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold text-slate-700 shadow-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
-            style={{ height: 44 }}
-          >
-            <span>{aiLoading ? '…' : '✨'}</span>
-            <span>{aiLoading ? 'Asking AI' : 'Suggest with AI'}</span>
-          </button>
           <button
             type="button"
             onClick={handleRecenter}
@@ -250,16 +195,9 @@ export default function InstitutionCoverageEditor({
         </div>
       </div>
 
-      {/* Bottom hint / AI reason */}
+      {/* Bottom hint */}
       <div className="pointer-events-none absolute bottom-6 left-1/2 max-w-md -translate-x-1/2 rounded-md bg-black/55 px-3 py-2 text-center text-xs text-white backdrop-blur">
-        {aiReason ? (
-          <>
-            <span className="mr-1 text-brand">✨</span>
-            {aiReason}
-          </>
-        ) : (
-          <>Drag the pin to the actual building, then reshape the polygon, or tap “Suggest with AI”.</>
-        )}
+        Drag the pin to the actual building, then drag the polygon vertices to reshape your service area.
       </div>
     </div>
   );

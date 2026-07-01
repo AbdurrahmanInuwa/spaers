@@ -218,6 +218,48 @@ router.patch('/me/avatar', session.requireAuth('citizen'), async (req, res) => {
   }
 });
 
+// PATCH /api/citizens/me/medical
+// Body (any subset): { allergies, chronicCondition, implantDevice }
+// - `allergies` / `chronicCondition`: string or null/empty to clear.
+// - `implantDevice`: boolean.
+router.patch('/me/medical', session.requireAuth('citizen'), async (req, res) => {
+  try {
+    const { allergies, chronicCondition, implantDevice } = req.body || {};
+
+    const data = {};
+    if (allergies !== undefined) {
+      const trimmed = allergies == null ? '' : String(allergies).trim();
+      data.allergies = trimmed || null;
+    }
+    if (chronicCondition !== undefined) {
+      const trimmed = chronicCondition == null ? '' : String(chronicCondition).trim();
+      data.chronicCondition = trimmed || null;
+    }
+    if (implantDevice !== undefined) {
+      data.implantDevice = Boolean(implantDevice);
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'No medical fields to update' });
+    }
+
+    const updated = await prisma.citizen.update({
+      where: { id: req.session.userId },
+      data,
+      select: {
+        id: true,
+        allergies: true,
+        chronicCondition: true,
+        implantDevice: true,
+      },
+    });
+    res.json({ citizen: updated });
+  } catch (err) {
+    console.error('Update medical error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/citizens/by-spaers-id/:id
 router.get('/by-spaers-id/:id', session.requireAuth('citizen'), async (req, res) => {
   try {

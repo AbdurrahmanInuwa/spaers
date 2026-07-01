@@ -197,12 +197,6 @@ export default function IncidentCommandPage() {
   }
 
   const all = incidents || [];
-  const total = all.length;
-  const active = all.filter(
-    (i) => i.status === 'active' || i.status === 'dispatched'
-  ).length;
-  const critical = all.filter((i) => i.priority === 'critical').length;
-  const pending = all.filter((i) => i.status === 'active').length;
 
   const filtered = useMemo(() => {
     return all.filter((i) => {
@@ -220,10 +214,10 @@ export default function IncidentCommandPage() {
         {/* Header + refresh */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold leading-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-extrabold leading-tight text-navy sm:text-3xl">
               Incident Command
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-muted">
               Real-time emergency management
             </p>
           </div>
@@ -232,7 +226,7 @@ export default function IncidentCommandPage() {
             onClick={manualRefresh}
             aria-label="Refresh"
             disabled={refreshing}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-brand hover:text-brand disabled:opacity-60"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-navy-100 bg-white text-navy-600 transition hover:border-red hover:text-red disabled:opacity-60"
           >
             <svg
               width="18"
@@ -253,57 +247,42 @@ export default function IncidentCommandPage() {
           </button>
         </div>
 
-        <div className="my-6 h-px bg-slate-200" />
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile label="Total" value={total} />
-          <StatTile label="Active" value={active} accent="text-brand" />
-          <StatTile
-            label="Critical"
-            value={critical}
-            accent="text-brand"
-            highlight={critical > 0}
-          />
-          <StatTile
-            label="Pending"
-            value={pending}
-            accent="text-amber-800"
-          />
-        </div>
+        <div className="my-6 h-px bg-navy-100" />
 
         {/* Filters */}
-        <div className="mt-7">
-          <FilterLabel>Filter by status</FilterLabel>
-          <FilterRow
-            options={STATUS_FILTERS}
-            current={statusFilter}
-            onSelect={setStatusFilter}
-          />
-        </div>
-        <div className="mt-5">
-          <FilterLabel>Filter by priority</FilterLabel>
-          <FilterRow
-            options={PRIORITY_FILTERS}
-            current={priorityFilter}
-            onSelect={setPriorityFilter}
-          />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div>
+            <FilterLabel>Filter by status</FilterLabel>
+            <FilterRow
+              options={STATUS_FILTERS}
+              current={statusFilter}
+              onSelect={setStatusFilter}
+            />
+          </div>
+          <div>
+            <FilterLabel>Filter by priority</FilterLabel>
+            <FilterRow
+              options={PRIORITY_FILTERS}
+              current={priorityFilter}
+              onSelect={setPriorityFilter}
+            />
+          </div>
         </div>
 
-        <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+        <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
           {filtered.length} incident{filtered.length === 1 ? '' : 's'} found
         </p>
 
         {/* Body */}
         <div className="mt-3">
           {incidents === null ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+            <div className="rounded-card border border-navy-100 bg-white p-6 text-sm text-muted">
               Loading…
             </div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center">
-              <p className="text-sm font-semibold text-slate-700">
-                {total === 0
+            <div className="rounded-card border border-dashed border-navy-100 bg-white p-8 text-center">
+              <p className="text-sm font-semibold text-navy-600">
+                {all.length === 0
                   ? 'No incidents in your coverage yet.'
                   : 'No incidents match these filters.'}
               </p>
@@ -366,40 +345,40 @@ function IncidentCard({ incident, canAssign = false, onAssign, onViewMedia }) {
 
   return (
     <div
-      className={`rounded-xl border bg-white p-4 transition sm:p-5 ${
+      className={`rounded-card border bg-white p-4 transition sm:p-5 ${
         isCritical
-          ? 'border-brand shadow-[0_12px_30px_-12px_rgba(220,38,38,0.35)]'
-          : 'border-slate-200 shadow-sm hover:shadow-md'
+          ? 'border-red shadow-[0_12px_30px_-12px_rgba(220,38,38,0.35)]'
+          : 'border-navy-100 shadow-spaers-sm hover:shadow-md'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-bold text-slate-900">
+          <h3 className="text-base font-bold text-navy">
             {incident.type}
           </h3>
           {isPanic && <PanicTag />}
         </div>
         {incident.priority && <PriorityChip priority={incident.priority} />}
       </div>
-      <p className="mt-0.5 text-xs text-slate-500">
+      <p className="mt-0.5 text-xs text-muted">
         {timeAgo(incident.createdAt)}
         {' · '}
         <span
           className={
-            incident.anonymous ? 'text-slate-400' : 'text-slate-600'
+            incident.anonymous ? 'text-navy-300' : 'text-navy-600'
           }
         >
           {reporterName}
         </span>
       </p>
       {incident.notes && (
-        <p className="mt-2 text-sm leading-relaxed text-slate-700">
+        <p className="mt-2 text-sm leading-relaxed text-navy-600">
           {incident.notes}
         </p>
       )}
 
       {dispatcherName && (
-        <div className="mt-3 flex items-center gap-2 rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        <div className="mt-3 flex items-center gap-2 rounded-md border border-navy-50 bg-navy-50 px-3 py-2 text-xs text-navy-600">
           <svg
             width="14"
             height="14"
@@ -416,7 +395,7 @@ function IncidentCard({ incident, canAssign = false, onAssign, onViewMedia }) {
           </svg>
           <span>
             Dispatcher:{' '}
-            <span className="font-semibold text-slate-800">
+            <span className="font-semibold text-navy">
               {dispatcherName}
             </span>
           </span>
@@ -431,7 +410,7 @@ function IncidentCard({ incident, canAssign = false, onAssign, onViewMedia }) {
       )}
 
       <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-muted">
           {incident.address ? (
             <>
               <svg
@@ -451,7 +430,7 @@ function IncidentCard({ incident, canAssign = false, onAssign, onViewMedia }) {
               <span className="truncate">{incident.address}</span>
             </>
           ) : (
-            <span className="font-mono text-[11px] text-slate-400">
+            <span className="font-mono text-[11px] text-navy-300">
               {Number(incident.victimLat).toFixed(4)},{' '}
               {Number(incident.victimLng).toFixed(4)}
             </span>
@@ -461,11 +440,11 @@ function IncidentCard({ incident, canAssign = false, onAssign, onViewMedia }) {
       </div>
 
       {canAssign && (
-        <div className="mt-3 border-t border-slate-100 pt-3">
+        <div className="mt-3 border-t border-navy-50 pt-3">
           <button
             type="button"
             onClick={onAssign}
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition hover:bg-brand-dark"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-red px-3 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-spaers-sm transition hover:bg-red-dark"
           >
             <svg
               width="14"
@@ -514,14 +493,14 @@ function AssignDispatcherModal({ incident, dispatchers, onClose, onAssign }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 p-4">
+      <div className="w-full max-w-md overflow-hidden rounded-card border border-navy-100 bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-navy-100 px-5 py-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-navy">
               Assign dispatcher
             </h3>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 text-xs text-muted">
               {incident.type} · pick a responder to send to this incident.
             </p>
           </div>
@@ -530,7 +509,7 @@ function AssignDispatcherModal({ incident, dispatchers, onClose, onAssign }) {
             onClick={onClose}
             disabled={submitting}
             aria-label="Close"
-            className="text-slate-400 hover:text-slate-700 disabled:opacity-50"
+            className="text-navy-300 hover:text-navy-600 disabled:opacity-50"
           >
             ✕
           </button>
@@ -538,7 +517,7 @@ function AssignDispatcherModal({ incident, dispatchers, onClose, onAssign }) {
 
         <div className="max-h-[55vh] overflow-y-auto px-5 py-4">
           {dispatchers.length === 0 ? (
-            <p className="rounded-md bg-slate-50 px-3 py-3 text-xs italic text-slate-500">
+            <p className="rounded-md bg-navy-50 px-3 py-3 text-xs italic text-muted">
               No dispatchers on file. Add one in Dispatchers first.
             </p>
           ) : (
@@ -550,8 +529,8 @@ function AssignDispatcherModal({ incident, dispatchers, onClose, onAssign }) {
                     <label
                       className={`flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2 transition ${
                         isSelected
-                          ? 'border-brand bg-red-50'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                          ? 'border-red bg-red-50'
+                          : 'border-navy-100 bg-white hover:bg-navy-50'
                       }`}
                     >
                       <input
@@ -559,13 +538,13 @@ function AssignDispatcherModal({ incident, dispatchers, onClose, onAssign }) {
                         name="dispatcher"
                         checked={isSelected}
                         onChange={() => setSelected(d.id)}
-                        className="h-4 w-4 border-slate-300 text-brand focus:ring-brand"
+                        className="h-4 w-4 border-navy-100 text-red focus:ring-0"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-slate-900">
+                        <p className="truncate text-sm font-semibold text-navy">
                           {d.name}
                         </p>
-                        <p className="text-[11px] text-slate-500">
+                        <p className="text-[11px] text-muted">
                           <span className="font-mono uppercase tracking-wider">
                             {d.dispatcherId}
                           </span>{' '}
@@ -580,12 +559,12 @@ function AssignDispatcherModal({ incident, dispatchers, onClose, onAssign }) {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+        <div className="flex justify-end gap-2 border-t border-navy-100 px-5 py-4">
           <button
             type="button"
             onClick={onClose}
             disabled={submitting}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-md border border-navy-100 px-4 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -593,7 +572,7 @@ function AssignDispatcherModal({ incident, dispatchers, onClose, onAssign }) {
             type="button"
             onClick={confirm}
             disabled={!selected || submitting}
-            className="rounded-md bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md bg-red px-4 py-2 text-sm font-bold text-white shadow-spaers-sm transition hover:bg-red-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? 'Sending…' : 'Send dispatcher'}
           </button>
@@ -634,7 +613,7 @@ function AttachmentThumb({ attachment, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="relative block h-16 w-16 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-900 transition hover:border-brand"
+      className="relative block h-16 w-16 shrink-0 overflow-hidden rounded-md border border-navy-100 bg-slate-900 transition hover:border-red"
       aria-label={isVideo ? 'Play attached video' : 'Open attached photo'}
     >
       {url ? (
@@ -667,11 +646,11 @@ function AttachmentThumb({ attachment, onClick }) {
           <img
             src={url}
             alt={attachment.originalName || 'attachment'}
-            className="h-full w-full bg-slate-100 object-cover"
+            className="h-full w-full bg-navy-50 object-cover"
           />
         )
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-400">
+        <div className="flex h-full w-full items-center justify-center bg-navy-50 text-navy-300">
           <svg
             width="20"
             height="20"
@@ -716,7 +695,7 @@ function MediaViewerModal({ attachment, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-navy/90 p-4"
       onClick={onClose}
     >
       <button
@@ -765,7 +744,7 @@ function MediaViewerModal({ attachment, onClose }) {
 
 function FilterLabel({ children }) {
   return (
-    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
       {children}
     </p>
   );
@@ -783,27 +762,14 @@ function FilterRow({ options, current, onSelect }) {
             onClick={() => onSelect(opt.value)}
             className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
               isActive
-                ? 'border-brand bg-brand text-white shadow-sm'
-                : 'border-slate-200 bg-white text-slate-700 hover:border-brand hover:text-brand'
+                ? 'border-red bg-red text-white shadow-spaers-sm'
+                : 'border-navy-100 bg-white text-navy-600 hover:border-red hover:text-red'
             }`}
           >
             {opt.label}
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function StatTile({ label, value, accent = 'text-slate-900', highlight = false }) {
-  return (
-    <div
-      className={`rounded-xl border bg-white p-4 shadow-sm ${
-        highlight ? 'border-brand' : 'border-slate-200'
-      }`}
-    >
-      <p className={`text-2xl font-extrabold ${accent}`}>{value}</p>
-      <p className="mt-0.5 text-xs font-semibold text-slate-500">{label}</p>
     </div>
   );
 }

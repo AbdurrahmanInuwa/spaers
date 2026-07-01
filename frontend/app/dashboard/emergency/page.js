@@ -1,14 +1,15 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Marker } from '@react-google-maps/api';
 import MapView from '../../components/MapView';
 import PulseRings from '../../components/PulseRings';
 import { pinIcon, SEMANTIC_COLOR } from '../../lib/mapPins';
 import { useEmergency } from '../EmergencyContext';
+import FileReportModal from '../../components/FileReportModal';
 
 const EMERGENCY_TYPES = ['Shooting', 'Medical', 'Assault', 'Fire', 'Flooding'];
-const PULSE_MAX_M = 10000;
+const PULSE_MAX_M = 3000; // Matches INSTITUTION_REACH_M on the backend
 const PULSE_DURATION_MS = 4500;
 const DEFAULT_ZOOM = 15;
 
@@ -27,8 +28,10 @@ export default function EmergencyPage() {
     dispatcherPosition,
     triggerSOS,
     reset,
+    cancelEmergency,
   } = useEmergency();
   const mapRef = useRef(null);
+  const [showFileReport, setShowFileReport] = useState(false);
 
   function handleRecenter() {
     if (!mapRef.current || !location) return;
@@ -54,7 +57,7 @@ export default function EmergencyPage() {
         <MapView
           center={location}
           zoom={DEFAULT_ZOOM}
-          mapTypeId="satellite"
+          mapTypeId="roadmap"
           onMapLoad={(m) => {
             mapRef.current = m;
           }}
@@ -123,7 +126,7 @@ export default function EmergencyPage() {
               </button>
               <button
                 type="button"
-                onClick={reset}
+                onClick={cancelEmergency}
                 disabled={dispatchStarted}
                 title={
                   dispatchStarted
@@ -238,7 +241,7 @@ export default function EmergencyPage() {
           <button
             onClick={triggerSOS}
             disabled={submitting}
-            className={`relative z-10 flex h-40 w-40 sm:h-64 sm:w-64 items-center justify-center rounded-full bg-brand text-4xl font-extrabold tracking-wider text-white shadow-2xl transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-80 ${
+            className={`relative z-10 flex h-40 w-40 sm:h-64 sm:w-64 items-center justify-center rounded-full bg-navy text-4xl font-extrabold tracking-wider text-white shadow-2xl transition hover:bg-navy-700 disabled:cursor-not-allowed disabled:opacity-80 ${
               submitting ? 'animate-pulse' : ''
             }`}
             style={{
@@ -250,6 +253,36 @@ export default function EmergencyPage() {
           </button>
         </div>
       </div>
+
+      {/* Floating "File a report" CTA — bottom-right of the viewport,
+          off to the side of the SOS button so they don't compete. */}
+      <button
+        type="button"
+        onClick={() => setShowFileReport(true)}
+        aria-label="File a report"
+        className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-red px-5 py-3 text-sm font-bold text-white shadow-spaers-md transition-colors hover:bg-red-dark"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        File a report
+      </button>
+
+      <FileReportModal
+        open={showFileReport}
+        onClose={() => setShowFileReport(false)}
+      />
     </div>
   );
 }

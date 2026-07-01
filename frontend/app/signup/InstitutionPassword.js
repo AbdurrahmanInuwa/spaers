@@ -22,7 +22,7 @@ export default function InstitutionPassword({ onBack, onSubmit, submitting }) {
   }
 
   return (
-    <div className="flex h-full items-start justify-center overflow-y-auto px-6 py-8">
+    <div className="flex min-h-[calc(100vh-100px)] items-center justify-center px-6 py-8">
       <div className="w-full max-w-md">
         <button
           type="button"
@@ -59,7 +59,7 @@ export default function InstitutionPassword({ onBack, onSubmit, submitting }) {
               required
               minLength={6}
               autoComplete="new-password"
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-brand"
             />
           </div>
 
@@ -78,7 +78,7 @@ export default function InstitutionPassword({ onBack, onSubmit, submitting }) {
               required
               minLength={6}
               autoComplete="new-password"
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-brand"
             />
           </div>
 

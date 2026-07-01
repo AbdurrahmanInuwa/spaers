@@ -98,48 +98,14 @@ export function StatusChip({ status }) {
   );
 }
 
+// PanicTag / PanicBanner used to render a triangle icon + "PANIC" label
+// on every SOS-sourced incident. Rendered as no-ops now so every caller
+// can keep the guard `{isPanic && <PanicTag />}` without visual noise —
+// panic rows are already tagged by their status/priority chips.
 export function PanicTag() {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-brand px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.13em] text-white">
-      <svg
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M12 9v4" />
-        <path d="M12 17h.01" />
-        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-      </svg>
-      PANIC
-    </span>
-  );
+  return null;
 }
 
 export function PanicBanner() {
-  return (
-    <div className="flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-      Panic Alert
-    </div>
-  );
+  return null;
 }

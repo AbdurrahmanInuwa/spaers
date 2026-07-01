@@ -33,7 +33,7 @@ export default function InstitutionLayout({ children }) {
 
   return (
     <InstitutionProvider>
-      <div className="flex h-dvh w-full overflow-hidden">
+      <div className="flex h-[calc(100dvh-100px)] w-full overflow-hidden">
         <div className="hidden md:flex">
           <Sidebar />
         </div>
@@ -42,7 +42,7 @@ export default function InstitutionLayout({ children }) {
         </MobileDrawer>
         <div className="flex h-full min-w-0 flex-1 flex-col">
           <MobileTopBar onMenu={() => setDrawerOpen(true)} />
-          <main className="flex-1 overflow-y-auto bg-slate-50">{children}</main>
+          <main className="flex-1 overflow-y-auto bg-ice">{children}</main>
         </div>
       </div>
     </InstitutionProvider>

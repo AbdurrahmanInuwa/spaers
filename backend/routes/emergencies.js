@@ -2,7 +2,6 @@ const express = require('express');
 const prisma = require('../lib/prisma');
 const session = require('../lib/session');
 const redis = require('../lib/redis');
-const { pointInPolygon } = require('../lib/geometry');
 
 // Backend haversine — keep here so we don't depend on the frontend's lib
 function haversineMeters(p1, p2) {
@@ -16,6 +15,30 @@ function haversineMeters(p1, p2) {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Institutions are notified when a victim is within this many meters of the
+// institution's geocoded address pin. Replaces the legacy polygon-containment
+// check — we are no longer asking institutions to draw a coverage shape.
+const INSTITUTION_REACH_M = 3000; // 3 km
+
+// True when this institution should receive (or already received) this
+// incident under the radius model.
+function instCovers(inst, incident) {
+  if (
+    typeof inst?.centerLat !== 'number' ||
+    typeof inst?.centerLng !== 'number' ||
+    typeof incident?.lat !== 'number' ||
+    typeof incident?.lng !== 'number'
+  ) {
+    return false;
+  }
+  return (
+    haversineMeters(
+      { lat: incident.lat, lng: incident.lng },
+      { lat: inst.centerLat, lng: inst.centerLng }
+    ) <= INSTITUTION_REACH_M
+  );
 }
 const { issueToken, resolveToken } = require('../lib/tokens');
 const {
@@ -31,7 +54,7 @@ const { reverseGeocode } = require('../lib/geocode');
 // and "My Reports" cards as the human-readable description. Citizens can
 // override later via PATCH (when the slow-path report flow ships).
 const PANIC_NOTES_DEFAULT =
-  'PANIC ALERT — Emergency assistance needed immediately';
+  'PANIC ALERT. Emergency assistance needed immediately.';
 
 // Allowed emergency types for both panic SOS and the slow-path report flow.
 // Kept tight (5 values) per product decision.
@@ -112,11 +135,12 @@ router.post('/', session.requireAuth('citizen'), async (req, res) => {
         name: true,
         responseNumbers: true,
         responseEmails: true,
-        coveragePolygon: true,
+        centerLat: true,
+        centerLng: true,
       },
     });
     const matched = institutions.filter((inst) =>
-      pointInPolygon({ lat, lng }, inst.coveragePolygon || [])
+      instCovers(inst, { lat, lng })
     );
 
     // Patch the geocoded address onto the row once it resolves — fire-and-forget
@@ -417,11 +441,12 @@ router.post('/anonymous', async (req, res) => {
         name: true,
         responseNumbers: true,
         responseEmails: true,
-        coveragePolygon: true,
+        centerLat: true,
+        centerLng: true,
       },
     });
     const matched = institutions.filter((inst) =>
-      pointInPolygon({ lat, lng }, inst.coveragePolygon || [])
+      instCovers(inst, { lat, lng })
     );
 
     // Same broadcast shape as the citizen flow so institution dashboards
@@ -565,7 +590,7 @@ router.get('/active', session.requireAuth('institution'), async (req, res) => {
   try {
     const inst = await prisma.institution.findUnique({
       where: { id: req.session.userId },
-      select: { id: true, coveragePolygon: true },
+      select: { id: true, centerLat: true, centerLng: true },
     });
     if (!inst) return res.status(404).json({ error: 'Not found' });
 
@@ -603,9 +628,8 @@ router.get('/active', session.requireAuth('institution'), async (req, res) => {
         },
       },
     });
-    const polygon = inst.coveragePolygon || [];
     const inCoverage = candidates.filter((e) =>
-      pointInPolygon({ lat: e.victimLat, lng: e.victimLng }, polygon)
+      instCovers(inst, { lat: e.victimLat, lng: e.victimLng })
     );
     res.json({ emergencies: inCoverage });
   } catch (err) {
@@ -619,7 +643,7 @@ router.get('/history', session.requireAuth('institution'), async (req, res) => {
   try {
     const inst = await prisma.institution.findUnique({
       where: { id: req.session.userId },
-      select: { id: true, coveragePolygon: true },
+      select: { id: true, centerLat: true, centerLng: true },
     });
     if (!inst) return res.status(404).json({ error: 'Not found' });
 
@@ -633,9 +657,8 @@ router.get('/history', session.requireAuth('institution'), async (req, res) => {
         },
       },
     });
-    const polygon = inst.coveragePolygon || [];
     const inCoverage = all.filter((e) =>
-      pointInPolygon({ lat: e.victimLat, lng: e.victimLng }, polygon)
+      instCovers(inst, { lat: e.victimLat, lng: e.victimLng })
     );
     res.json({ emergencies: inCoverage });
   } catch (err) {
@@ -665,7 +688,7 @@ router.get(
     try {
       const inst = await prisma.institution.findUnique({
         where: { id: req.session.userId },
-        select: { id: true, coveragePolygon: true },
+        select: { id: true, centerLat: true, centerLng: true },
       });
       if (!inst) return res.status(404).json({ error: 'Not found' });
 
@@ -712,12 +735,8 @@ router.get(
         },
       });
 
-      const polygon = inst.coveragePolygon || [];
       const inCoverage = candidates.filter((e) =>
-        pointInPolygon(
-          { lat: e.victimLat, lng: e.victimLng },
-          polygon
-        )
+        instCovers(inst, { lat: e.victimLat, lng: e.victimLng })
       );
 
       res.json({ emergencies: inCoverage.map(sanitizeAnonymous) });
@@ -827,11 +846,12 @@ router.post('/report', session.requireAuth('citizen'), async (req, res) => {
         name: true,
         responseNumbers: true,
         responseEmails: true,
-        coveragePolygon: true,
+        centerLat: true,
+        centerLng: true,
       },
     });
     const matched = institutions.filter((inst) =>
-      pointInPolygon({ lat, lng }, inst.coveragePolygon || [])
+      instCovers(inst, { lat, lng })
     );
 
     // Broadcast shape used by socket fan-out — mirrors what /active returns
@@ -923,18 +943,40 @@ router.post('/:id/cancel', session.requireAuth('citizen'), async (req, res) => {
           : `Cannot cancel a ${emergency.status} report.`,
       });
     }
+    // Fetch the full row so we know where it happened. Needed for the
+    // radius fan-out below.
+    const full = await prisma.emergency.findUnique({
+      where: { id: emergency.id },
+      select: { id: true, victimLat: true, victimLng: true },
+    });
     const updated = await prisma.emergency.update({
       where: { id: emergency.id },
       data: { status: 'cancelled', resolvedAt: new Date() },
     });
 
-    // Drop pin from any institution feeds that picked it up via socket.
-    const dispatchInstitutions = await prisma.emergencyDispatch.findMany({
-      where: { emergencyId: emergency.id },
-      select: { institutionId: true },
-    });
+    // Drop pin from every institution feed within reach — not just those
+    // that dispatched. Otherwise institutions that saw the row appear via
+    // the initial fan-out never hear the cancel and it lingers as "active"
+    // in their live UI.
+    const [dispatchInstitutions, allInstitutions] = await Promise.all([
+      prisma.emergencyDispatch.findMany({
+        where: { emergencyId: emergency.id },
+        select: { institutionId: true },
+      }),
+      prisma.institution.findMany({
+        select: { id: true, centerLat: true, centerLng: true },
+      }),
+    ]);
+    const inRangeIds = allInstitutions
+      .filter((inst) =>
+        instCovers(inst, { lat: full.victimLat, lng: full.victimLng })
+      )
+      .map((inst) => inst.id);
     const institutionIds = [
-      ...new Set(dispatchInstitutions.map((d) => d.institutionId)),
+      ...new Set([
+        ...dispatchInstitutions.map((d) => d.institutionId),
+        ...inRangeIds,
+      ]),
     ];
     realtime.emitEmergencyResolved(emergency.id, institutionIds);
     redis.del(`emergency_pos:${emergency.id}`).catch(() => {});
@@ -1077,7 +1119,7 @@ router.post('/:id/admin-token', session.requireAuth('institution'), async (req, 
   try {
     const inst = await prisma.institution.findUnique({
       where: { id: req.session.userId },
-      select: { id: true, coveragePolygon: true },
+      select: { id: true, centerLat: true, centerLng: true },
     });
     if (!inst) return res.status(404).json({ error: 'Institution not found' });
 
@@ -1085,12 +1127,7 @@ router.post('/:id/admin-token', session.requireAuth('institution'), async (req, 
       where: { id: req.params.id },
     });
     if (!emergency) return res.status(404).json({ error: 'Emergency not found' });
-    if (
-      !pointInPolygon(
-        { lat: emergency.victimLat, lng: emergency.victimLng },
-        inst.coveragePolygon || []
-      )
-    ) {
+    if (!instCovers(inst, { lat: emergency.victimLat, lng: emergency.victimLng })) {
       return res.status(403).json({ error: 'Out of coverage' });
     }
 
@@ -1103,6 +1140,62 @@ router.post('/:id/admin-token', session.requireAuth('institution'), async (req, 
     res.json({ token });
   } catch (err) {
     console.error('Admin token error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/emergencies/:id/resolve
+// Institution-side resolve. Requires the emergency to be within this
+// institution's reach (same gate as the admin-token endpoint). Idempotent —
+// if the row is already in a terminal state we just return its current state.
+router.post('/:id/resolve', session.requireAuth('institution'), async (req, res) => {
+  try {
+    const inst = await prisma.institution.findUnique({
+      where: { id: req.session.userId },
+      select: { id: true, centerLat: true, centerLng: true },
+    });
+    if (!inst) return res.status(404).json({ error: 'Institution not found' });
+
+    const emergency = await prisma.emergency.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!emergency) return res.status(404).json({ error: 'Emergency not found' });
+    if (!instCovers(inst, { lat: emergency.victimLat, lng: emergency.victimLng })) {
+      return res.status(403).json({ error: 'Out of coverage' });
+    }
+
+    if (
+      emergency.status === 'resolved' ||
+      emergency.status === 'cancelled' ||
+      emergency.status === 'expired'
+    ) {
+      return res.json({ emergency });
+    }
+
+    const now = new Date();
+    const updated = await prisma.emergency.update({
+      where: { id: emergency.id },
+      data: { status: 'resolved', resolvedAt: now },
+    });
+
+    // Drop pin from every institution feed that had this row in its active
+    // list, and tell dispatchers en route they can stand down.
+    const dispatchInstitutions = await prisma.emergencyDispatch.findMany({
+      where: { emergencyId: emergency.id },
+      select: { institutionId: true },
+    });
+    const institutionIds = [
+      ...new Set([
+        inst.id,
+        ...dispatchInstitutions.map((d) => d.institutionId),
+      ]),
+    ];
+    realtime.emitEmergencyResolved(emergency.id, institutionIds);
+    redis.del(`emergency_pos:${emergency.id}`).catch(() => {});
+
+    res.json({ emergency: updated });
+  } catch (err) {
+    console.error('Resolve emergency error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

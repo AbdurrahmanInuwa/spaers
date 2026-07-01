@@ -45,6 +45,26 @@ export function minDistanceToPolygonM(point, polygon) {
   return min;
 }
 
+// Spherical-polygon area in square meters (planimeter / l'Huilier).
+// Accurate at any scale relevant for coverage areas (city-to-region).
+// Polygon is Array<{lat, lng}>, assumed to be in winding order; sign is
+// discarded because we only care about absolute area.
+export function polygonAreaM2(polygon) {
+  if (!Array.isArray(polygon) || polygon.length < 3) return 0;
+  const R = 6378137; // WGS-84 mean radius (m)
+  const toRad = (d) => (d * Math.PI) / 180;
+  let total = 0;
+  const n = polygon.length;
+  for (let i = 0; i < n; i++) {
+    const p1 = polygon[i];
+    const p2 = polygon[(i + 1) % n];
+    total +=
+      (toRad(p2.lng) - toRad(p1.lng)) *
+      (2 + Math.sin(toRad(p1.lat)) + Math.sin(toRad(p2.lat)));
+  }
+  return Math.abs((total * R * R) / 2);
+}
+
 // Generate a regular polygon approximation of a circle (great-circle math).
 // Returns an array of { lat, lng } vertices.
 export function generateCirclePolygon(center, radiusMeters, sides = 36) {

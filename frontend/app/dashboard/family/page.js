@@ -31,7 +31,6 @@ export default function FamilyPage() {
 
   // modal state
   const [addOpen, setAddOpen] = useState(false);
-  const [viewMember, setViewMember] = useState(null);
   const [deleteMember, setDeleteMember] = useState(null);
 
   async function refresh() {
@@ -90,13 +89,13 @@ export default function FamilyPage() {
   if (!ackAt) {
     const canContinue = ack1 && ack2;
     return (
-      <div className="px-4 py-6 sm:px-8 sm:py-8">
+      <div className="flex min-h-full flex-col items-center justify-center px-4 py-6 text-center sm:px-8 sm:py-8">
         <h1 className="text-2xl font-extrabold text-slate-900">Family</h1>
         <p className="mt-2 text-sm text-slate-500">
           Please review and acknowledge before continuing.
         </p>
 
-        <div className="mt-6 max-w-2xl space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mt-6 w-full max-w-3xl space-y-4 rounded-lg border border-slate-200 bg-white p-6 text-left shadow-sm">
           <label className="flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
             <input
               type="checkbox"
@@ -129,7 +128,7 @@ export default function FamilyPage() {
             type="button"
             onClick={persistAck}
             disabled={!canContinue || ackSubmitting}
-            className="mt-2 w-full rounded-md bg-brand px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 w-full rounded-md bg-navy px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-navy-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {ackSubmitting ? 'Saving…' : 'I acknowledge'}
           </button>
@@ -160,18 +159,12 @@ export default function FamilyPage() {
         )}
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* User's own card always first */}
         {(() => {
           const selfInList = members.find((m) => m.id === user.id);
           const self = selfInList || user;
-          return (
-            <MemberCard
-              member={self}
-              isSelf
-              onView={() => setViewMember(self)}
-            />
-          );
+          return <MemberCard member={self} isSelf />;
         })()}
 
         {/* Other family members */}
@@ -181,7 +174,6 @@ export default function FamilyPage() {
             <MemberCard
               key={m.id}
               member={m}
-              onView={() => setViewMember(m)}
               onDelete={() => setDeleteMember(m)}
             />
           ))}
@@ -199,13 +191,6 @@ export default function FamilyPage() {
             setAddOpen(false);
             toast('Family member added');
           }}
-        />
-      )}
-
-      {viewMember && (
-        <MemberDetailsModal
-          member={viewMember}
-          onClose={() => setViewMember(null)}
         />
       )}
 
@@ -244,7 +229,7 @@ function AddCard({ onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="group flex aspect-[4/5] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white text-slate-400 transition hover:border-brand hover:text-brand"
+      className="group flex min-h-[260px] flex-col items-center justify-center rounded-card border-2 border-dashed border-navy-100 bg-white text-muted transition-colors hover:border-red hover:text-red"
       aria-label="Add family member"
     >
       <span className="text-5xl leading-none">+</span>
@@ -255,47 +240,106 @@ function AddCard({ onClick }) {
   );
 }
 
-function MemberCard({ member, isSelf, onView, onDelete }) {
+function MemberCard({ member, isSelf, onDelete }) {
   const age = ageFromDob(member.dob);
+  const initials =
+    `${(member.firstName || '?')[0] || ''}${(member.lastName || '')[0] || ''}`.toUpperCase();
   return (
-    <div className="group relative aspect-[4/5] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
-      <button
-        type="button"
-        onClick={onView}
-        className="flex h-full w-full flex-col items-center justify-center px-4 text-center"
-      >
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand/10 text-2xl font-bold text-brand">
-          {(member.firstName || '?').slice(0, 1).toUpperCase()}
-          {(member.lastName || '').slice(0, 1).toUpperCase()}
-        </div>
-        <p className="mt-3 text-base font-bold text-slate-900">
-          {member.firstName} {member.lastName}
-        </p>
-        <p className="mt-0.5 text-xs text-slate-500">
-          {isSelf ? 'You' : age != null ? `${age} yrs` : ''}
-          {member.bloodGroup ? ` · ${member.bloodGroup}` : ''}
-        </p>
-        {isSelf && (
-          <span className="mt-3 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
-            You
-          </span>
-        )}
-      </button>
-
+    <div className="relative h-full overflow-hidden rounded-card border border-navy-100 bg-white shadow-spaers-sm">
       {!isSelf && onDelete && (
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="absolute right-2 top-2 hidden h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400 shadow ring-1 ring-slate-200 hover:bg-red-50 hover:text-brand group-hover:flex"
+          onClick={onDelete}
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-muted shadow ring-1 ring-navy-100 transition-colors hover:bg-rose-50 hover:text-rose-600"
           aria-label="Remove member"
           title="Remove member"
         >
           ✕
         </button>
       )}
+
+      {/* Header */}
+      <div className="flex flex-col items-center gap-4 border-b border-navy-100 px-5 py-5 text-center sm:flex-row sm:items-center sm:gap-5 sm:text-left">
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-card bg-red text-xl font-extrabold text-white shadow-spaers-md ring-1 ring-navy-100">
+          {initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+            <p className="text-[18px] font-extrabold tracking-tight text-navy">
+              {member.firstName} {member.lastName}
+            </p>
+            {isSelf && (
+              <span className="rounded-full bg-teal/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-teal-dark">
+                You
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 truncate text-xs text-muted">
+            {member.email || '—'}
+          </p>
+          {member.spaersId && (
+            <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-red/30 bg-red/5 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-red">
+              <span className="text-[9px] font-bold uppercase tracking-[0.15em] opacity-70">
+                ID
+              </span>
+              <span className="font-mono">{member.spaersId}</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Personal + Medical sections */}
+      <div className="grid grid-cols-1 gap-px bg-navy-50 sm:grid-cols-2">
+        <SubSection accent="bg-red" title="Personal">
+          <CardTile
+            label="Phone"
+            value={formatPhone(member.phone, member.country)}
+          />
+          <CardTile label="Age" value={age != null ? `${age}` : '—'} />
+        </SubSection>
+        <SubSection accent="bg-teal" title="Medical">
+          <CardTile
+            label="Blood group"
+            value={member.bloodGroup || '—'}
+            highlight={!!member.bloodGroup}
+          />
+          <CardTile label="Allergies" value={member.allergies || '—'} />
+          <CardTile label="Chronic" value={member.chronicCondition || '—'} />
+          <CardTile label="Device" value={member.implantDevice ? 'Yes' : 'No'} />
+        </SubSection>
+      </div>
+    </div>
+  );
+}
+
+function SubSection({ accent, title, children }) {
+  return (
+    <div className="bg-white p-5">
+      <header className="mb-3 flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${accent}`} />
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
+          {title}
+        </h3>
+      </header>
+      <div className="grid grid-cols-2 gap-3">{children}</div>
+    </div>
+  );
+}
+
+function CardTile({ label, value, highlight }) {
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-navy-300">
+        {label}
+      </p>
+      <p
+        className={`mt-0.5 truncate text-sm font-semibold ${
+          highlight ? 'text-red' : 'text-navy'
+        }`}
+        title={typeof value === 'string' ? value : undefined}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -603,112 +647,3 @@ function DeleteMemberModal({ member, currentCitizenId, onClose, onRemoved }) {
   );
 }
 
-function MemberDetailsModal({ member, onClose }) {
-  const age = ageFromDob(member.dob);
-  const initials =
-    `${(member.firstName || '?')[0] || ''}${(member.lastName || '')[0] || ''}`.toUpperCase();
-
-  return (
-    <ModalShell onClose={onClose} maxWidth="max-w-3xl">
-      <div className="relative">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-        >
-          ✕
-        </button>
-
-        <div className="px-6 pb-6 pt-6">
-          <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:gap-6 sm:text-left">
-            <div className="relative flex h-32 w-32 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-brand text-3xl font-extrabold text-white shadow-lg ring-1 ring-slate-200">
-              <span>{initials}</span>
-            </div>
-            <div className="mt-4 flex-1 sm:mt-0">
-              <h2 className="text-2xl font-extrabold text-slate-900">
-                {member.firstName} {member.lastName}
-              </h2>
-              <p className="mt-0.5 text-sm text-slate-500">
-                {member.email || '—'}
-              </p>
-              {member.spaersId && (
-                <span className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 px-3 py-1 text-xs font-bold tracking-wider text-brand">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] opacity-70">
-                    ID
-                  </span>
-                  <span className="font-mono">{member.spaersId}</span>
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2">
-            <DetailsSection title="Personal" accent="bg-brand">
-              <DetailsTile
-                label="Name"
-                value={`${member.firstName} ${member.lastName}`}
-              />
-              <DetailsTile label="Email" value={member.email || '—'} />
-              <DetailsTile
-                label="Phone"
-                value={formatPhone(member.phone, member.country)}
-              />
-              <DetailsTile label="Age" value={age != null ? `${age}` : '—'} />
-            </DetailsSection>
-
-            <DetailsSection title="Medical" accent="bg-emerald-500">
-              <DetailsTile
-                label="Blood group"
-                value={member.bloodGroup || '—'}
-                highlight={!!member.bloodGroup}
-              />
-              <DetailsTile label="Allergies" value={member.allergies || '—'} />
-              <DetailsTile
-                label="Chronic condition"
-                value={member.chronicCondition || '—'}
-              />
-              <DetailsTile
-                label="Implanted device"
-                value={member.implantDevice ? 'Yes' : 'No'}
-              />
-            </DetailsSection>
-          </div>
-        </div>
-      </div>
-    </ModalShell>
-  );
-}
-
-function DetailsSection({ title, accent, children }) {
-  return (
-    <section className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <header className="flex items-center gap-2 border-b border-slate-100 px-5 py-3">
-        <span className={`h-2 w-2 rounded-full ${accent}`} />
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
-          {title}
-        </h3>
-      </header>
-      <div className="grid flex-1 grid-cols-1 gap-px bg-slate-100">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function DetailsTile({ label, value, highlight }) {
-  return (
-    <div className="bg-white px-5 py-4">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-        {label}
-      </p>
-      <p
-        className={`mt-1 text-sm font-medium ${
-          highlight ? 'text-brand' : 'text-slate-800'
-        }`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}

@@ -65,4 +65,85 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// Small helper that returns the current volunteer row for the caller. Used
+// by every self-service state-transition endpoint below.
+async function findMe(req) {
+  return prisma.volunteer.findUnique({
+    where: { citizenId: req.session.userId },
+  });
+}
+
+// POST /api/volunteers/me/pause
+// Approved volunteers can pause themselves. Responders stop being routed
+// to them until they resume. Idempotent — pausing an already-paused row
+// just returns it.
+router.post('/me/pause', async (req, res) => {
+  try {
+    const existing = await findMe(req);
+    if (!existing) return res.status(404).json({ error: 'No volunteer application on file' });
+    if (existing.status === 'paused') return res.json({ volunteer: existing });
+    if (existing.status !== 'approved') {
+      return res
+        .status(409)
+        .json({ error: 'Only approved volunteers can pause' });
+    }
+    const volunteer = await prisma.volunteer.update({
+      where: { citizenId: req.session.userId },
+      data: { status: 'paused' },
+    });
+    res.json({ volunteer });
+  } catch (err) {
+    console.error('Volunteer pause error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/volunteers/me/resume
+// Move a paused row back to approved. Idempotent — already-approved rows
+// are returned as-is.
+router.post('/me/resume', async (req, res) => {
+  try {
+    const existing = await findMe(req);
+    if (!existing) return res.status(404).json({ error: 'No volunteer application on file' });
+    if (existing.status === 'approved') return res.json({ volunteer: existing });
+    if (existing.status !== 'paused') {
+      return res
+        .status(409)
+        .json({ error: 'Only paused volunteers can resume' });
+    }
+    const volunteer = await prisma.volunteer.update({
+      where: { citizenId: req.session.userId },
+      data: { status: 'approved' },
+    });
+    res.json({ volunteer });
+  } catch (err) {
+    console.error('Volunteer resume error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/volunteers/me/stop
+// Permanently exit the volunteer program. Row moves to `revoked` with a
+// user-authored note. To come back the citizen has to reapply and be
+// re-approved by an admin, same as any other revoked row.
+router.post('/me/stop', async (req, res) => {
+  try {
+    const existing = await findMe(req);
+    if (!existing) return res.status(404).json({ error: 'No volunteer application on file' });
+    if (existing.status === 'revoked') return res.json({ volunteer: existing });
+    const volunteer = await prisma.volunteer.update({
+      where: { citizenId: req.session.userId },
+      data: {
+        status: 'revoked',
+        decisionNote: 'User stopped volunteering',
+        decidedAt: new Date(),
+      },
+    });
+    res.json({ volunteer });
+  } catch (err) {
+    console.error('Volunteer stop error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

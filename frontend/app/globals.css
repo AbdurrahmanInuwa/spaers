@@ -3,14 +3,26 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #F4F7FC; /* ice */
+  --foreground: #1A1A1A; /* ink */
 }
 
 html, body {
   background: var(--background);
   color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Font family is now set via Tailwind's `font-sans` on <body>,
+     which resolves to var(--font-inter). Kept fallback for SSR. */
+  font-family: var(--font-roboto), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ───── Accessible focus ring — never remove the outline silently ─── */
+:where(button, a, [role="button"], input, select, textarea):focus-visible {
+  outline: 2px solid #E63946;
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 /* ───── Google Places Autocomplete dropdown styling ───── */

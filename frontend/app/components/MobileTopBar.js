@@ -4,12 +4,12 @@
 // button on the left that opens the off-canvas drawer.
 export default function MobileTopBar({ onMenu, title = 'SPAERS' }) {
   return (
-    <header className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 md:hidden">
+    <header className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-navy-100 bg-white px-4 md:hidden">
       <button
         type="button"
         onClick={onMenu}
         aria-label="Open menu"
-        className="-ml-1 flex h-10 w-10 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
+        className="-ml-1 flex h-10 w-10 items-center justify-center rounded-btn text-navy hover:bg-navy-50"
       >
         <svg
           width="22"
@@ -27,7 +27,7 @@ export default function MobileTopBar({ onMenu, title = 'SPAERS' }) {
           <line x1="4" y1="18" x2="20" y2="18" />
         </svg>
       </button>
-      <p className="text-base font-extrabold tracking-tight text-brand">
+      <p className="text-base font-extrabold tracking-tight text-navy">
         {title}
       </p>
     </header>

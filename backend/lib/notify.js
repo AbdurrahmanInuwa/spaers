@@ -241,6 +241,9 @@ async function notifyFamilyMembers({ emergency, triggerer, members }) {
   const subject = `Family alert · ${triggererName} has an emergency`;
   const intro = `${triggererName}, a member of your family, just triggered a SPAERS ${emergency.type} emergency. Tap below to see their location.`;
 
+  // Family channel policy: SMS + email only, and only to members aged 18+.
+  // Voice calls are intentionally NOT part of this path — adults on file
+  // receive the alert on both text and email, nothing more.
   const tasks = [];
   for (const m of recipients) {
     if (m.phone) {
@@ -253,21 +256,6 @@ async function notifyFamilyMembers({ emergency, triggerer, members }) {
           audienceId: m.id,
         })
       );
-      // Only the family creator's chosen call-list (max 2) get a phone
-      // call on top of SMS + email.
-      if (m.familyCallEligible) {
-        tasks.push(
-          sendVoice({
-            to: m.phone,
-            message: `Hello. A member of your family, ${triggererName}, has a ${
-              /^[aeiouAEIOU]/.test(emergency.type) ? 'an' : 'a'
-            } ${emergency.type} emergency.`,
-            emergencyId: emergency.id,
-            audience: 'family',
-            audienceId: m.id,
-          })
-        );
-      }
     }
     if (m.email) {
       tasks.push(

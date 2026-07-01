@@ -5,7 +5,6 @@ import Link from 'next/link';
 import {
   GoogleMap,
   Marker,
-  Polygon,
   Circle,
   useJsApiLoader,
 } from '@react-google-maps/api';
@@ -17,6 +16,7 @@ import { useToast } from '../../components/Toast';
 import { API_URL, apiFetch } from '../../lib/api';
 import { pinForType, pinIcon, SEMANTIC_COLOR } from '../../lib/mapPins';
 import VictimCard from '../../components/VictimCard';
+import IncidentCommandModal from '../../components/IncidentCommandModal';
 import { getSocket } from '../../lib/socket';
 
 const containerStyle = { width: '100%', height: '100%' };
@@ -26,7 +26,7 @@ const POLL_MS = 30000;
 
 // Self-contained pulse ring — runs its own RAF loop so the parent doesn't
 // re-render 60×/sec.
-function PulseRing({ center, color, durationMs = 2500, maxRadiusM = 600 }) {
+function PulseRing({ center, color, durationMs = 2500, maxRadiusM = 3000 }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
     let raf, start;
@@ -61,16 +61,16 @@ function statusOf(emergency) {
   if (!d) {
     return {
       label: 'Awaiting dispatch',
-      dot: 'bg-slate-300',
-      text: 'text-slate-500',
+      dot: 'bg-navy-100',
+      text: 'text-muted',
       dispatcher: null,
     };
   }
   if (d.startedAt) {
     return {
       label: 'On the way',
-      dot: 'bg-emerald-500',
-      text: 'text-emerald-700',
+      dot: 'bg-teal',
+      text: 'text-teal-dark',
       dispatcher: d.dispatcher?.name || null,
     };
   }
@@ -97,22 +97,21 @@ export default function InstitutionEmergencyPage() {
   const [tokenForActive, setTokenForActive] = useState(null);
   const [opening, setOpening] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [showIncidentCommand, setShowIncidentCommand] = useState(false);
   const mapRef = useRef(null);
 
   function handleRecenter() {
-    if (!mapRef.current || !window.google?.maps) return;
-    const polygon = institution?.coveragePolygon || [];
-    if (polygon.length === 0) {
+    if (!mapRef.current) return;
+    if (
+      typeof institution?.centerLat === 'number' &&
+      typeof institution?.centerLng === 'number'
+    ) {
       mapRef.current.panTo({
         lat: institution.centerLat,
         lng: institution.centerLng,
       });
-      mapRef.current.setZoom(15);
-      return;
     }
-    const bounds = new window.google.maps.LatLngBounds();
-    polygon.forEach((p) => bounds.extend(p));
-    mapRef.current.fitBounds(bounds, 60);
+    mapRef.current.setZoom(15);
   }
 
   // Load dispatchers once
@@ -321,26 +320,25 @@ export default function InstitutionEmergencyPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-500">
+      <div className="flex h-full items-center justify-center text-sm text-muted">
         Loading…
       </div>
     );
   }
   if (!institution) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-500">
+      <div className="flex h-full items-center justify-center text-sm text-muted">
         Could not load institution.
       </div>
     );
   }
 
   const center = { lat: institution.centerLat, lng: institution.centerLng };
-  const polygon = institution.coveragePolygon || [];
 
   return (
     <div className="relative h-full w-full">
       {!isLoaded && (
-        <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+        <div className="flex h-full w-full items-center justify-center text-sm text-muted">
           {loadError ? 'Failed to load map.' : 'Loading map…'}
         </div>
       )}
@@ -348,35 +346,17 @@ export default function InstitutionEmergencyPage() {
         <GoogleMap
           mapContainerStyle={containerStyle}
           center={center}
-          zoom={14}
+          zoom={15}
           onLoad={(map) => {
             mapRef.current = map;
-            if (polygon.length > 0 && window.google?.maps) {
-              const bounds = new window.google.maps.LatLngBounds();
-              polygon.forEach((p) => bounds.extend(p));
-              map.fitBounds(bounds, 60);
-            }
           }}
           options={{
-            mapTypeId: 'satellite',
+            mapTypeId: 'roadmap',
             disableDefaultUI: true,
             zoomControl: true,
             clickableIcons: false,
           }}
         >
-          {polygon.length > 0 && (
-            <Polygon
-              paths={polygon}
-              options={{
-                fillColor: PULSE.color,
-                fillOpacity: 0.12,
-                strokeColor: PULSE.color,
-                strokeOpacity: 0.85,
-                strokeWeight: 2,
-                clickable: false,
-              }}
-            />
-          )}
           <Marker position={center} />
           <PulseRing
             center={center}
@@ -409,7 +389,7 @@ export default function InstitutionEmergencyPage() {
         onClick={handleRecenter}
         aria-label="Recenter map"
         title="Recenter to coverage area"
-        className="pointer-events-auto absolute bottom-[150px] right-3 flex h-10 w-10 items-center justify-center rounded-md bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 transition hover:bg-slate-100"
+        className="pointer-events-auto absolute bottom-[150px] right-3 flex h-10 w-10 items-center justify-center rounded-md bg-white text-navy-600 shadow-lg ring-1 ring-slate-200 transition hover:bg-navy-50"
       >
         <svg
           width="18"
@@ -435,7 +415,7 @@ export default function InstitutionEmergencyPage() {
       <div className="pointer-events-none absolute left-4 top-4">
         <div
           className={`pointer-events-auto rounded-md px-4 py-2 text-sm font-semibold text-white shadow-lg ${
-            hasEmergency ? 'bg-brand' : 'bg-emerald-500'
+            hasEmergency ? 'bg-red' : 'bg-teal'
           }`}
         >
           <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-white" />
@@ -446,12 +426,12 @@ export default function InstitutionEmergencyPage() {
       {/* Active emergencies list */}
       {hasEmergency && (
         <div className="pointer-events-auto absolute right-4 top-4 w-72 rounded-md bg-white shadow-lg">
-          <div className="border-b border-slate-100 px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+          <div className="border-b border-navy-50 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted">
               Active emergencies
             </p>
           </div>
-          <ul className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
+          <ul className="max-h-[60vh] divide-y divide-navy-50 overflow-y-auto">
             {emergencies.map((e) => {
               const isActive = activePanel?.id === e.id;
               const status = statusOf(e);
@@ -461,22 +441,22 @@ export default function InstitutionEmergencyPage() {
                     type="button"
                     onClick={() => openDispatchPanel(e)}
                     className={`block w-full px-3 py-2.5 text-left transition ${
-                      isActive ? 'bg-red-50' : 'hover:bg-slate-50'
+                      isActive ? 'bg-red-50' : 'hover:bg-navy-50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-slate-900">
+                      <p className="text-sm font-bold text-navy">
                         {e.type}
                       </p>
                       {isActive && (
-                        <span className="rounded-full bg-brand px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                        <span className="rounded-full bg-red px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                           Open
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
+                    <p className="mt-0.5 text-[11px] text-muted">
                       {new Date(e.createdAt).toLocaleTimeString()} ·{' '}
-                      <span className="text-slate-400">
+                      <span className="text-navy-300">
                         {e.victimLat.toFixed(4)}, {e.victimLng.toFixed(4)}
                       </span>
                     </p>
@@ -486,7 +466,7 @@ export default function InstitutionEmergencyPage() {
                         {status.label}
                       </span>
                       {status.dispatcher && (
-                        <span className="ml-1 truncate text-[10px] text-slate-400">
+                        <span className="ml-1 truncate text-[10px] text-navy-300">
                           · {status.dispatcher}
                         </span>
                       )}
@@ -502,12 +482,12 @@ export default function InstitutionEmergencyPage() {
       {/* Floating dispatcher panel — sits to the LEFT of the emergencies list */}
       {activePanel && (
         <div className="pointer-events-auto absolute inset-x-4 top-[60%] z-20 max-h-[35vh] overflow-y-auto rounded-md bg-white shadow-2xl ring-1 ring-slate-200 md:inset-x-auto md:top-4 md:right-[19.5rem] md:max-h-[80vh] md:w-72">
-          <div className="flex items-start justify-between border-b border-slate-100 px-3 py-2">
+          <div className="flex items-start justify-between border-b border-navy-50 px-3 py-2">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted">
                 Send dispatcher
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500">
+              <p className="mt-0.5 text-[11px] text-muted">
                 {activePanel.type} · {new Date(activePanel.createdAt).toLocaleTimeString()}
               </p>
             </div>
@@ -515,7 +495,7 @@ export default function InstitutionEmergencyPage() {
               type="button"
               onClick={closeDispatchPanel}
               aria-label="Close"
-              className="text-slate-400 hover:text-slate-700"
+              className="text-navy-300 hover:text-navy-600"
             >
               ✕
             </button>
@@ -524,30 +504,30 @@ export default function InstitutionEmergencyPage() {
           {/* Victim info */}
           <VictimCard victim={activePanel.citizen} />
 
-          <div className="border-t border-slate-100 px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+          <div className="border-t border-navy-50 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted">
               Pick a dispatcher
             </p>
           </div>
 
           {dispatchers.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <p className="text-sm font-medium text-slate-700">
+              <p className="text-sm font-medium text-navy-600">
                 No dispatchers yet
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted">
                 Add a dispatcher to continue.
               </p>
               <Link
                 href="/institution/dispatchers"
-                className="mt-4 inline-block rounded-md bg-brand px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition hover:bg-brand-dark"
+                className="mt-4 inline-block rounded-md bg-red px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition hover:bg-red-dark"
               >
                 Go to dispatchers
               </Link>
             </div>
           ) : (
             <>
-              <ul className="max-h-[50vh] divide-y divide-slate-100 overflow-y-auto">
+              <ul className="max-h-[50vh] divide-y divide-navy-50 overflow-y-auto">
                 {dispatchers.map((d) => {
                   const isActive = selectedDispatcher === d.id;
                   return (
@@ -556,20 +536,20 @@ export default function InstitutionEmergencyPage() {
                         type="button"
                         onClick={() => setSelectedDispatcher(d.id)}
                         className={`w-full px-3 py-2 text-left transition ${
-                          isActive ? 'bg-red-50' : 'hover:bg-slate-50'
+                          isActive ? 'bg-red-50' : 'hover:bg-navy-50'
                         }`}
                       >
                         <div className="flex items-start justify-between">
-                          <p className="text-sm font-bold text-slate-900">
+                          <p className="text-sm font-bold text-navy">
                             {d.name}
                           </p>
                           {isActive && (
-                            <span className="rounded-full bg-brand px-2 py-0.5 text-[9px] font-bold uppercase text-white">
+                            <span className="rounded-full bg-red px-2 py-0.5 text-[9px] font-bold uppercase text-white">
                               Selected
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-slate-400">
+                        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-navy-300">
                           {d.dispatcherId} · {d.mode}
                         </p>
                       </button>
@@ -577,14 +557,14 @@ export default function InstitutionEmergencyPage() {
                   );
                 })}
               </ul>
-              <div className="border-t border-slate-100 p-3">
+              <div className="border-t border-navy-50 p-3">
                 <button
                   type="button"
                   onClick={confirmDispatch}
                   disabled={
                     !selectedDispatcher || !tokenForActive || confirming
                   }
-                  className="w-full rounded-md bg-brand px-3 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-md bg-red px-3 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition hover:bg-red-dark disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {confirming ? 'Dispatching…' : 'Dispatch'}
                 </button>
@@ -593,6 +573,35 @@ export default function InstitutionEmergencyPage() {
           )}
         </div>
       )}
+
+      {/* Floating "Incident Command" CTA — bottom-center */}
+      <button
+        type="button"
+        onClick={() => setShowIncidentCommand(true)}
+        aria-label="Open Incident Command"
+        className="fixed bottom-6 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-navy px-5 py-3 text-sm font-bold text-white shadow-spaers-md transition-colors hover:bg-navy-700 md:left-[calc(50%+8rem)]"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 2 4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3z" />
+          <path d="M9 12l2 2 4-4" />
+        </svg>
+        Incident Command
+      </button>
+
+      <IncidentCommandModal
+        open={showIncidentCommand}
+        onClose={() => setShowIncidentCommand(false)}
+      />
     </div>
   );
 }

@@ -7,7 +7,22 @@ const cookie = require('cookie');
 const prisma = require('./prisma');
 const session = require('./session');
 const { resolveToken } = require('./tokens');
-const { pointInPolygon } = require('./geometry');
+
+// Mirror of the radius-based coverage check in routes/emergencies.js. Keep
+// in sync — when the institution reach changes there, update it here too.
+const INSTITUTION_REACH_M = 3000;
+function haversineMeters(p1, p2) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(p2.lat - p1.lat);
+  const dLng = toRad(p2.lng - p1.lng);
+  const lat1 = toRad(p1.lat);
+  const lat2 = toRad(p2.lat);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
 
 let io = null;
 
@@ -74,13 +89,16 @@ function init(httpServer) {
           }
           const inst = await prisma.institution.findUnique({
             where: { id: sess.userId },
-            select: { coveragePolygon: true },
+            select: { centerLat: true, centerLng: true },
           });
-          const inside = pointInPolygon(
-            { lat: emergency.victimLat, lng: emergency.victimLng },
-            inst?.coveragePolygon || []
-          );
-          if (!inside) return ack?.({ error: 'Out of coverage' });
+          const inReach =
+            typeof inst?.centerLat === 'number' &&
+            typeof inst?.centerLng === 'number' &&
+            haversineMeters(
+              { lat: emergency.victimLat, lng: emergency.victimLng },
+              { lat: inst.centerLat, lng: inst.centerLng }
+            ) <= INSTITUTION_REACH_M;
+          if (!inReach) return ack?.({ error: 'Out of coverage' });
         } else {
           return ack?.({ error: 'Invalid scope' });
         }

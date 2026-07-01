@@ -66,10 +66,13 @@ app.use((req, res) => {
 
 const http = require('http');
 const realtime = require('./lib/realtime');
+const { initDeviceMqtt } = require('./lib/deviceMqtt');
 const httpServer = http.createServer(app);
 realtime.init(httpServer);
 const server = httpServer.listen(PORT, () => {
   console.log(`SPAERS backend listening on http://localhost:${PORT}`);
+  // Kick off the hardware-SOS MQTT subscriber. No-op if env not set.
+  initDeviceMqtt();
 });
 
 // Release Prisma's connection pool on shutdown so nodemon restarts don't

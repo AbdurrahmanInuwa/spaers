@@ -17,7 +17,11 @@ const API_URL = RAW.replace(/\/+$/, '').endsWith('/api')
   ? RAW.replace(/\/+$/, '')
   : `${RAW.replace(/\/+$/, '')}/api`;
 
-const DEFAULT_COVERAGE_RADIUS_M = 2000; // 2 km
+// Default starter polygon: a 5-sided regular polygon, ~100 m across (50 m
+// radius from the address pin). Small + simple — the user is expected to
+// reshape it in the editor.
+const DEFAULT_COVERAGE_RADIUS_M = 50;
+const DEFAULT_COVERAGE_SIDES = 5;
 
 const INSTITUTION_TYPES = [
   // Medical
@@ -101,7 +105,6 @@ export default function InstitutionForm({ onBack }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    // Step 1: validate, then move to the coverage-area review screen.
     if (!form.address) {
       toast('Please select an address', { variant: 'error' });
       return;
@@ -110,7 +113,6 @@ export default function InstitutionForm({ onBack }) {
       toast('Pick the address from the suggestions', { variant: 'error' });
       return;
     }
-
     if (!form.type) {
       toast('Please pick an institution type', { variant: 'error' });
       return;
@@ -122,7 +124,8 @@ export default function InstitutionForm({ onBack }) {
       return;
     }
 
-    // Initialize center to Google's pin and generate the default polygon
+    // Seed a 2 km circle so the user has a starting polygon to reshape in
+    // the editor. They're expected to reshape it.
     setForm((f) =>
       f.coveragePolygon
         ? f
@@ -132,8 +135,12 @@ export default function InstitutionForm({ onBack }) {
             centerLng: f.centerLng ?? f.addressLng,
             coveragePolygon: generateCirclePolygon(
               { lat: f.addressLat, lng: f.addressLng },
-              DEFAULT_COVERAGE_RADIUS_M
+              DEFAULT_COVERAGE_RADIUS_M,
+              DEFAULT_COVERAGE_SIDES
             ),
+            coverageRadiusM: DEFAULT_COVERAGE_RADIUS_M,
+            coverageReason: null,
+            coverageMethod: 'radius',
           }
     );
     setView('review');
@@ -228,8 +235,12 @@ export default function InstitutionForm({ onBack }) {
             centerLat: center?.lat ?? f.centerLat,
             centerLng: center?.lng ?? f.centerLng,
             coveragePolygon: polygon,
-            coverageRadiusM: radius_m ?? f.coverageRadiusM,
+            coverageRadiusM: radius_m ?? null,
             coverageReason: reason ?? f.coverageReason,
+            // Manual reshape always demotes the method to 'custom' so the
+            // review screen labels it honestly — "Drive-time isochrone" only
+            // applies until the user drags a vertex.
+            coverageMethod: 'custom',
           }));
           setView('review');
         }}
@@ -261,7 +272,7 @@ export default function InstitutionForm({ onBack }) {
 
   if (view === 'otp') {
     return (
-      <div className="flex h-full items-start justify-center overflow-y-auto px-6 py-8">
+      <div className="flex min-h-[calc(100vh-100px)] items-center justify-center px-6 py-8">
         <div className="w-full max-w-md">
           <h1 className="text-2xl font-extrabold text-slate-900">
             Verify your email
@@ -397,7 +408,7 @@ export default function InstitutionForm({ onBack }) {
         <div className="space-y-2">
           {responseNumbers.map((num, idx) => (
             <div key={idx} className="flex gap-2">
-              <div className="flex flex-1 items-stretch overflow-hidden rounded-md border border-slate-300 bg-white focus-within:border-brand focus-within:ring-1 focus-within:ring-brand">
+              <div className="flex flex-1 items-stretch overflow-hidden rounded-md border border-slate-300 bg-white transition-colors focus-within:border-brand">
                 {dialCode && (
                   <span className="flex items-center border-r border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-600">
                     +{dialCode}
@@ -439,7 +450,7 @@ export default function InstitutionForm({ onBack }) {
         <label className="mb-1 block text-xs font-medium text-slate-700">
           Response email(s){' '}
           <span className="font-normal text-slate-400">
-            — first is your login username
+            — this will be your login username
           </span>
         </label>
         <div className="space-y-2">
@@ -482,7 +493,7 @@ export default function InstitutionForm({ onBack }) {
         type="submit"
         className="mt-2 w-full rounded-md bg-brand px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark"
       >
-        Create Account
+        Continue
       </button>
     </FormShell>
   );

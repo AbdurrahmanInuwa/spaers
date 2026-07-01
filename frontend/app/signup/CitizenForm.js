@@ -232,7 +232,7 @@ export default function CitizenForm({ onBack }) {
           {(() => {
             const dialCode = getDialCode(form.country);
             return (
-              <div className="flex items-stretch overflow-hidden rounded-md border border-slate-300 bg-white focus-within:border-brand focus-within:ring-1 focus-within:ring-brand">
+              <div className="flex items-stretch overflow-hidden rounded-md border border-slate-300 bg-white transition-colors focus-within:border-brand">
                 {dialCode && (
                   <span className="flex items-center border-r border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-600">
                     +{dialCode}

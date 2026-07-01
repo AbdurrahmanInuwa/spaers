@@ -9,6 +9,7 @@ import { uploadToS3, getSignedDownloadUrl } from '../../lib/uploads';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 import TwoFactorToggleModal from '../../components/TwoFactorToggleModal';
 import DeleteAccountModal from '../../components/DeleteAccountModal';
+import EditMedicalModal from '../../components/EditMedicalModal';
 
 function formatPhone(phone, country) {
   if (!phone) return '—';
@@ -30,6 +31,7 @@ export default function ProfilePage() {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showEditMedical, setShowEditMedical] = useState(false);
   const fileRef = useRef(null);
 
   // Resolve a fresh signed URL whenever the avatarKey changes
@@ -127,7 +129,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={handlePickFile}
-              className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-brand text-3xl font-extrabold text-white shadow-lg ring-1 ring-slate-200"
+              className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-red text-3xl font-extrabold text-white shadow-spaers-md ring-1 ring-navy-100"
               aria-label="Change profile photo"
             >
               {avatarUrl ? (
@@ -154,7 +156,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={handlePickFile}
-              className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-brand text-white shadow-md transition hover:bg-brand-dark"
+              className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-red text-white shadow-spaers-md transition hover:bg-red-dark"
               aria-label="Upload new photo"
               title="Upload new photo"
             >
@@ -183,10 +185,10 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-4 flex-1 sm:mt-0">
-            <h1 className="text-2xl font-extrabold text-slate-900">
+            <h1 className="text-[28px] font-extrabold tracking-tight text-navy">
               {user.firstName} {user.lastName}
             </h1>
-            <p className="mt-0.5 text-sm text-slate-500">{user.email}</p>
+            <p className="mt-0.5 text-sm text-muted">{user.email}</p>
 
             {user.spaersId && (
               <button
@@ -199,7 +201,7 @@ export default function ProfilePage() {
                     toast('Could not copy', { variant: 'error' });
                   }
                 }}
-                className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 px-3 py-1 text-xs font-bold tracking-wider text-brand transition hover:bg-brand hover:text-white"
+                className="mt-3 inline-flex items-center gap-2 rounded-full border border-red/30 bg-red/5 px-3 py-1 text-xs font-bold tracking-wider text-red transition hover:bg-red hover:text-white"
                 title="Click to copy"
               >
                 <span className="text-[10px] font-bold uppercase tracking-[0.15em] opacity-70">
@@ -227,7 +229,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={handleRemovePhoto}
-                className="ml-3 mt-3 text-xs font-semibold text-slate-400 hover:text-brand"
+                className="ml-3 mt-3 text-xs font-semibold text-muted transition-colors hover:text-red"
               >
                 Remove photo
               </button>
@@ -237,7 +239,7 @@ export default function ProfilePage() {
 
         {/* Info sections */}
         <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <SectionCard title="Personal" accent="bg-brand">
+          <SectionCard title="Personal" accent="bg-red">
             <Tile label="Name" value={`${user.firstName} ${user.lastName}`} />
             <Tile label="Email" value={user.email} />
             <Tile label="Phone" value={formatPhone(user.phone, user.country)} />
@@ -247,12 +249,12 @@ export default function ProfilePage() {
           <div className="self-start">
             <SectionCard
               title="Security"
-              accent="bg-slate-500"
+              accent="bg-navy"
               action={
                 <button
                   type="button"
                   onClick={() => setShowChangePassword(true)}
-                  className="rounded-md bg-brand px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-brand-dark"
+                  className="rounded-btn bg-navy px-3 py-1.5 text-xs font-bold text-white shadow-spaers-sm transition hover:bg-navy-700"
                 >
                   Change password
                 </button>
@@ -260,15 +262,15 @@ export default function ProfilePage() {
             >
               <Tile label="Password" value="••••••••" />
               <div className="bg-white px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-navy-300">
                   Two-factor auth
                 </p>
                 <div className="mt-1 flex items-center justify-between">
                   <span
-                    className={`text-sm font-medium ${
+                    className={`text-sm font-semibold ${
                       user.twoFactorEnabled
-                        ? 'text-emerald-600'
-                        : 'text-slate-500'
+                        ? 'text-teal-dark'
+                        : 'text-muted'
                     }`}
                   >
                     {user.twoFactorEnabled ? 'Enabled' : 'Disabled'}
@@ -276,7 +278,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowTwoFactor(true)}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-brand hover:text-brand"
+                    className="rounded-btn border border-navy-100 bg-white px-3 py-1 text-[11px] font-semibold text-navy-600 transition-colors hover:border-red hover:text-red"
                   >
                     {user.twoFactorEnabled ? 'Disable' : 'Enable'}
                   </button>
@@ -285,7 +287,19 @@ export default function ProfilePage() {
             </SectionCard>
           </div>
 
-          <SectionCard title="Medical" accent="bg-emerald-500">
+          <SectionCard
+            title="Medical"
+            accent="bg-teal"
+            action={
+              <button
+                type="button"
+                onClick={() => setShowEditMedical(true)}
+                className="rounded-btn border border-navy-100 bg-white px-3 py-1.5 text-xs font-bold text-navy-600 transition-colors hover:border-red hover:text-red"
+              >
+                Edit
+              </button>
+            }
+          >
             <Tile
               label="Blood group"
               value={user.bloodGroup || '—'}
@@ -306,7 +320,7 @@ export default function ProfilePage() {
         {/* Danger zone — kept visually distinct so it's not mistaken for a
             routine setting. Clicking opens a modal that requires the user to
             type a confirmation phrase before the delete request fires. */}
-        <section className="mt-10 overflow-hidden rounded-xl border border-rose-200 bg-white shadow-sm">
+        <section className="mt-10 overflow-hidden rounded-card border border-rose-200 bg-white shadow-spaers-sm">
           <header className="flex items-center gap-2 border-b border-rose-100 bg-rose-50 px-5 py-3">
             <span className="h-2 w-2 rounded-full bg-rose-500" />
             <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-rose-700">
@@ -315,10 +329,10 @@ export default function ProfilePage() {
           </header>
           <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-navy">
                 Delete account
               </p>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-muted">
                 Permanently remove your SPAERS account, medical profile, and
                 family membership. This cannot be undone.
               </p>
@@ -326,7 +340,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => setShowDelete(true)}
-              className="inline-flex shrink-0 items-center justify-center rounded-md border border-rose-300 bg-white px-4 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-600 hover:text-white"
+              className="inline-flex shrink-0 items-center justify-center rounded-btn border border-rose-300 bg-white px-4 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-600 hover:text-white"
             >
               Delete account
             </button>
@@ -351,23 +365,40 @@ export default function ProfilePage() {
       {showDelete && (
         <DeleteAccountModal onClose={() => setShowDelete(false)} />
       )}
+      {showEditMedical && (
+        <EditMedicalModal
+          initial={{
+            allergies: user.allergies,
+            chronicCondition: user.chronicCondition,
+            implantDevice: user.implantDevice,
+          }}
+          onClose={() => setShowEditMedical(false)}
+          onSaved={(updated) =>
+            setLocal({
+              allergies: updated.allergies,
+              chronicCondition: updated.chronicCondition,
+              implantDevice: updated.implantDevice,
+            })
+          }
+        />
+      )}
     </div>
   );
 }
 
 function SectionCard({ title, accent, children, action }) {
   return (
-    <section className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+    <section className="flex h-full flex-col overflow-hidden rounded-card border border-navy-100 bg-white shadow-spaers-sm">
+      <header className="flex items-center justify-between border-b border-navy-100 px-5 py-3">
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${accent}`} />
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
             {title}
           </h2>
         </div>
         {action}
       </header>
-      <div className="grid flex-1 grid-cols-1 gap-px bg-slate-100 sm:grid-cols-2">
+      <div className="grid flex-1 grid-cols-1 gap-px bg-navy-50 sm:grid-cols-2">
         {children}
       </div>
     </section>
@@ -377,12 +408,12 @@ function SectionCard({ title, accent, children, action }) {
 function Tile({ label, value, highlight }) {
   return (
     <div className="bg-white px-5 py-4">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-navy-300">
         {label}
       </p>
       <p
-        className={`mt-1 text-sm font-medium ${
-          highlight ? 'text-brand' : 'text-slate-800'
+        className={`mt-1 text-sm font-semibold ${
+          highlight ? 'text-red' : 'text-navy'
         }`}
       >
         {value}

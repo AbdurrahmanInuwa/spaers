@@ -16,7 +16,7 @@ import {
   minDistanceToPolygonM,
 } from '../lib/geometry';
 
-const PULSE_MAX_M = 10000;
+const PULSE_MAX_M = 3000; // Matches INSTITUTION_REACH_M on the backend
 const PULSE_DURATION_MS = 4500;
 const POLL_MS = 4000;
 const STORAGE_KEY = 'spaers_active_emergency_v1';
@@ -120,6 +120,22 @@ export function EmergencyProvider({ children }) {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
   }, []);
+
+  // Cancel = tell the backend to flip the row to `cancelled`, then reset
+  // local UI. Distinct from `reset` (which only clears local state) so the
+  // auto-reset-on-resolved path doesn't fire a cancel by accident.
+  const cancelEmergency = useCallback(async () => {
+    const id = emergencyId;
+    // Optimistically clear the UI so the citizen isn't stuck if the network
+    // is slow — the backend is idempotent and will still process the cancel.
+    reset();
+    if (!id) return;
+    try {
+      await apiFetch(`/emergencies/${id}/cancel`, { method: 'POST' });
+    } catch (err) {
+      console.error('cancelEmergency failed:', err);
+    }
+  }, [emergencyId, reset]);
 
   // ─── Subscribe to live dispatcher position via socket.io ───
   useEffect(() => {
@@ -352,6 +368,7 @@ export function EmergencyProvider({ children }) {
         // actions
         triggerSOS,
         reset,
+        cancelEmergency,
       }}
     >
       {children}
