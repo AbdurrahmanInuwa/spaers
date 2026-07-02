@@ -7,7 +7,7 @@ import { useAuth } from '../../../lib/auth';
 import { useToast } from '../../../components/Toast';
 import { uploadToS3 } from '../../../lib/uploads';
 
-const TYPES = ['Shooting', 'Medical', 'Assault', 'Fire', 'Flooding'];
+const TYPES = ['Shooting', 'Medical', 'Assault', 'Kidnapping', 'Fire', 'Flooding'];
 
 const PRIORITIES = [
   { value: 'low', label: 'Low', tint: 'bg-slate-500' },

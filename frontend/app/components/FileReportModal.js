@@ -15,7 +15,7 @@ import { uploadToS3 } from '../lib/uploads';
 //   onClose():   dismiss without submitting
 //   onSubmitted(): called after a successful POST so the list can refresh
 
-const TYPES = ['Shooting', 'Medical', 'Assault', 'Fire', 'Flooding'];
+const TYPES = ['Shooting', 'Medical', 'Assault', 'Kidnapping', 'Fire', 'Flooding'];
 
 const PRIORITIES = [
   { value: 'low', label: 'Low', tint: 'bg-navy-600' },

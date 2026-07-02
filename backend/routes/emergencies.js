@@ -57,11 +57,12 @@ const PANIC_NOTES_DEFAULT =
   'PANIC ALERT. Emergency assistance needed immediately.';
 
 // Allowed emergency types for both panic SOS and the slow-path report flow.
-// Kept tight (5 values) per product decision.
+// Kept tight (6 values) per product decision.
 const EMERGENCY_TYPES = new Set([
   'Shooting',
   'Medical',
   'Assault',
+  'Kidnapping',
   'Fire',
   'Flooding',
 ]);
@@ -337,6 +338,7 @@ const ANON_SOS_TYPES = new Set([
   'Shooting',
   'Medical',
   'Assault',
+  'Kidnapping',
   'Fire',
   'Flooding',
 ]);

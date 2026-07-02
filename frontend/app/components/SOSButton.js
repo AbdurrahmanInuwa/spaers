@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../lib/api';
 import { useToast } from './Toast';
 
-const TYPES = ['Shooting', 'Medical', 'Assault', 'Fire', 'Flooding'];
+const TYPES = ['Shooting', 'Medical', 'Assault', 'Kidnapping', 'Fire', 'Flooding'];
 const COUNTDOWN_S = 5;
 
 // Anonymous SOS button for the public home page. Two-step UX:
@@ -122,7 +122,7 @@ export default function SOSButton({ location, onTriggered, disabled = false }) {
         )}
 
         {open && (
-          <div className="absolute bottom-full left-1/2 z-30 mb-3 flex -translate-x-1/2 gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_-10px_rgba(220,38,38,0.35),0_8px_20px_-6px_rgba(0,0,0,0.15)] ring-1 ring-black/5">
+          <div className="absolute bottom-full left-1/2 z-30 mb-3 flex w-max max-w-[92vw] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_-10px_rgba(220,38,38,0.35),0_8px_20px_-6px_rgba(0,0,0,0.15)] ring-1 ring-black/5">
             {TYPES.map((label) => (
               <button
                 key={label}

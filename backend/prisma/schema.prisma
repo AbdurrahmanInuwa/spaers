@@ -67,7 +67,7 @@ model Emergency {
   id              String           @id @default(uuid())
   citizenId       String?
   citizen         Citizen?         @relation(fields: [citizenId], references: [id])
-  type            String           // 'Shooting' | 'Medical' | 'Assault' | 'Fire' | 'Flooding'
+  type            String           // 'Shooting' | 'Medical' | 'Assault' | 'Kidnapping' | 'Fire' | 'Flooding'
   victimLat       Float
   victimLng       Float
   // Reverse-geocoded street address, populated best-effort on create. Read-only

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Marker } from '@react-google-maps/api';
 import MapView from '../../components/MapView';
 import PulseRings from '../../components/PulseRings';
@@ -8,7 +8,7 @@ import { pinIcon, SEMANTIC_COLOR } from '../../lib/mapPins';
 import { useEmergency } from '../EmergencyContext';
 import FileReportModal from '../../components/FileReportModal';
 
-const EMERGENCY_TYPES = ['Shooting', 'Medical', 'Assault', 'Fire', 'Flooding'];
+const EMERGENCY_TYPES = ['Shooting', 'Medical', 'Assault', 'Kidnapping', 'Fire', 'Flooding'];
 const PULSE_MAX_M = 3000; // Matches INSTITUTION_REACH_M on the backend
 const PULSE_DURATION_MS = 4500;
 const DEFAULT_ZOOM = 15;
@@ -32,6 +32,17 @@ export default function EmergencyPage() {
   } = useEmergency();
   const mapRef = useRef(null);
   const [showFileReport, setShowFileReport] = useState(false);
+
+  // Track viewport width so the SOS wheel radius/chip scale react to
+  // orientation changes and screen size — not just first mount.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const onChange = (e) => setIsMobile(e.matches);
+    onChange(mq);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   function handleRecenter() {
     if (!mapRef.current || !location) return;
@@ -193,11 +204,10 @@ export default function EmergencyPage() {
   }
 
   // ─────── Default: SOS button + radial type chips ───────
-  // On narrow screens we shrink both the radius and the SOS so the chips
-  // fit inside the viewport without overflow.
-  const isMobile =
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
-  const radius = isMobile ? 180 : 270;
+  // On narrow screens we shrink the radius so the chips fit inside the
+  // viewport without overflow, and shrink chip size so long labels
+  // (e.g. "Kidnapping") don't wrap or spill past the container edge.
+  const radius = isMobile ? 130 : 270;
   const startAngleDeg = -90;
 
   return (
@@ -217,7 +227,7 @@ export default function EmergencyPage() {
               style={{
                 transform: `translate(${x}px, ${y}px)`,
               }}
-              className={`absolute flex min-w-[120px] items-center justify-center rounded-md border px-6 py-3 text-sm font-semibold shadow-sm transition ${
+              className={`absolute flex min-w-[84px] sm:min-w-[120px] items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-xs sm:px-6 sm:py-3 sm:text-sm font-semibold shadow-sm transition ${
                 isActive
                   ? 'border-brand bg-brand text-white shadow-md'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-brand hover:text-brand'

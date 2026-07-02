@@ -2,11 +2,12 @@
 // any zoom level.
 
 export const TYPE_COLOR = {
-  Shooting: '#7c3aed',  // violet
-  Medical: '#dc2626',   // brand red
-  Assault: '#f97316',   // orange
-  Fire: '#ea580c',      // deep orange
-  Flooding: '#0ea5e9',  // sky blue
+  Shooting: '#7c3aed',   // violet
+  Medical: '#dc2626',    // brand red
+  Assault: '#f97316',    // orange
+  Kidnapping: '#a21caf', // fuchsia — distinct from Shooting's violet
+  Fire: '#ea580c',       // deep orange
+  Flooding: '#0ea5e9',   // sky blue
 };
 
 // Generic semantic colors for non-emergency-type pins
